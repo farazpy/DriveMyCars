@@ -421,15 +421,16 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
   // Filtered Lists
   const filteredCars = useMemo(() => {
-    return cars.filter(c => {
+    return (cars || []).filter(c => {
+      if (!c) return false;
       if (filterApproval !== 'all' && c.approval_status !== filterApproval) return false;
       if (carSearch.trim()) {
         const q = carSearch.toLowerCase();
         return (
-          c.title.toLowerCase().includes(q) ||
-          c.lender_name.toLowerCase().includes(q) ||
+          (c.title || '').toLowerCase().includes(q) ||
+          (c.lender_name || '').toLowerCase().includes(q) ||
           (c.reg_number || '').toLowerCase().includes(q) ||
-          c.city.toLowerCase().includes(q)
+          (c.city || '').toLowerCase().includes(q)
         );
       }
       return true;
@@ -437,7 +438,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   }, [cars, filterApproval, carSearch]);
 
   const filteredUsers = useMemo(() => {
-    return allUsers.filter(u => {
+    return (allUsers || []).filter(u => {
+      if (!u) return false;
       if (userRoleFilter !== 'all' && u.role !== userRoleFilter) return false;
       if (userSearch.trim()) {
         const q = userSearch.toLowerCase();
@@ -452,7 +454,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   }, [allUsers, userRoleFilter, userSearch]);
 
   const filteredBookings = useMemo(() => {
-    return bookings.filter(b => {
+    return (bookings || []).filter(b => {
+      if (!b) return false;
       if (bookingFilter === 'disputed') return b.dispute_status === 'open';
       if (bookingFilter === 'active') return b.status === 'confirmed' || b.status === 'active';
       if (bookingFilter === 'cancelled') return b.status === 'cancelled';
@@ -555,7 +558,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             <span className="truncate max-w-[90px] xs:max-w-[130px] sm:max-w-none">{settings.brand_name}</span>
           </Link>
           <span className="text-[10px] font-extrabold px-1 sm:px-1.5 py-0.5 rounded-md bg-orange-950/60 text-orange-400 border border-orange-800 shrink-0">
-            v1.3.7
+            v1.5.7
           </span>
           <span className="text-neutral-600 hidden sm:inline">|</span>
           <div className="hidden lg:flex items-center space-x-2">

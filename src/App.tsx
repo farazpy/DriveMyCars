@@ -33,6 +33,7 @@ import { initAuth, googleSignIn, logout, updateFirebaseConfig } from './firebase
 import { RouterProvider, useRouter, Link } from './router.tsx';
 import { ThemeProvider } from './context/ThemeContext.tsx';
 import { PlatformSettingsProvider } from './context/PlatformSettingsContext.tsx';
+import { ErrorBoundary } from './components/ErrorBoundary.tsx';
 import { APIProvider } from '@vis.gl/react-google-maps';
 
 // Dedicated Pages
@@ -1073,14 +1074,16 @@ const GOOGLE_MAPS_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '';
 
 export default function App() {
   return (
-    <PlatformSettingsProvider>
-      <ThemeProvider>
-        <APIProvider apiKey={GOOGLE_MAPS_KEY}>
-          <RouterProvider>
-            <AppContent />
-          </RouterProvider>
-        </APIProvider>
-      </ThemeProvider>
-    </PlatformSettingsProvider>
+    <ErrorBoundary>
+      <PlatformSettingsProvider>
+        <ThemeProvider>
+          <APIProvider apiKey={GOOGLE_MAPS_KEY}>
+            <RouterProvider>
+              <AppContent />
+            </RouterProvider>
+          </APIProvider>
+        </ThemeProvider>
+      </PlatformSettingsProvider>
+    </ErrorBoundary>
   );
 }
