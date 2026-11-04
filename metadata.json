@@ -1,0 +1,6 @@
+{
+  "name": "DriveMyCarz - Peer-to-Peer & Rental Car Marketplace",
+  "description": "Rent and lease quality cars seamlessly with DriveMyCarz. Dedicated renter and lender portals, real-time availability filtering, and flexible bookings.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
