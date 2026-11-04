@@ -27,6 +27,11 @@ export interface PlatformSettings {
   brand_name: string;
   brand_tagline: string;
   logo_url: string;
+  favicon_png_96_url?: string;
+  favicon_svg_url?: string;
+  favicon_ico_url?: string;
+  apple_touch_icon_url?: string;
+  webmanifest_url?: string;
   contact_email: string;
   contact_phone: string;
   contact_address: string;
@@ -58,6 +63,11 @@ let memSettings: PlatformSettings = {
   brand_name: 'Charvi Rental',
   brand_tagline: 'Self-Drive Fleet · India',
   logo_url: '',
+  favicon_png_96_url: '/favicon-96x96.png',
+  favicon_svg_url: '/favicon.svg',
+  favicon_ico_url: '/favicon.ico',
+  apple_touch_icon_url: '/apple-touch-icon.png',
+  webmanifest_url: '/site.webmanifest',
   contact_email: 'operationalhtklabs@gmail.com',
   contact_phone: '+91 98765 43210',
   contact_address: 'Wakad, Pune, Maharashtra, India',
@@ -323,6 +333,11 @@ export async function initDatabase() {
 
     // Migration: ensure new site config columns exist
     const newSettingsCols = [
+      { name: 'favicon_png_96_url', type: 'TEXT' },
+      { name: 'favicon_svg_url', type: 'TEXT' },
+      { name: 'favicon_ico_url', type: 'TEXT' },
+      { name: 'apple_touch_icon_url', type: 'TEXT' },
+      { name: 'webmanifest_url', type: 'TEXT' },
       { name: 'commission_rate', type: 'DECIMAL(5,2) DEFAULT 10.00' },
       { name: 'gst_rate', type: 'DECIMAL(5,2) DEFAULT 18.00' },
       { name: 'security_deposit_default', type: 'DECIMAL(10,2) DEFAULT 3000.00' },
@@ -1481,6 +1496,11 @@ export async function getPlatformSettings(): Promise<PlatformSettings> {
           brand_name: (rows[0].brand_name && rows[0].brand_name !== 'DriveMyCarz') ? rows[0].brand_name : 'Charvi Rental',
           brand_tagline: rows[0].brand_tagline || 'Self-Drive Fleet · India',
           logo_url: rows[0].logo_url || '',
+          favicon_png_96_url: rows[0].favicon_png_96_url || '/favicon-96x96.png',
+          favicon_svg_url: rows[0].favicon_svg_url || '/favicon.svg',
+          favicon_ico_url: rows[0].favicon_ico_url || '/favicon.ico',
+          apple_touch_icon_url: rows[0].apple_touch_icon_url || '/apple-touch-icon.png',
+          webmanifest_url: rows[0].webmanifest_url || '/site.webmanifest',
           contact_email: rows[0].contact_email || 'operationalhtklabs@gmail.com',
           contact_phone: rows[0].contact_phone || '+91 98765 43210',
           contact_address: rows[0].contact_address || 'Wakad, Pune, Maharashtra, India',
@@ -1522,6 +1542,11 @@ export async function updatePlatformSettings(updates: Partial<PlatformSettings>)
         'brand_name',
         'brand_tagline',
         'logo_url',
+        'favicon_png_96_url',
+        'favicon_svg_url',
+        'favicon_ico_url',
+        'apple_touch_icon_url',
+        'webmanifest_url',
         'contact_email',
         'contact_phone',
         'contact_address',

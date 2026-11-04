@@ -10,6 +10,7 @@ import {
   IndianRupee
 } from 'lucide-react';
 import { Link } from '../router.tsx';
+import { SEO } from '../components/SEO.tsx';
 
 interface HostLeasingPageProps {
   onOpenListCarModal: () => void;
@@ -26,6 +27,13 @@ export const HostLeasingPage: React.FC<HostLeasingPageProps> = () => {
 
   return (
     <div className="w-full px-4 sm:px-8 lg:px-12 py-10 sm:py-16 space-y-16">
+      <SEO
+        title="List Your Car & Earn - Peer-to-Peer Car Sharing Host Program | Charvi Rental"
+        description="Earn up to ₹45,000/month by leasing your idle car on Charvi Rental. Free listing, verified KYC drivers, 100% insurance backing, and flexible scheduling."
+        canonicalPath="/host-leasing"
+        ogType="website"
+        keywords={['host car sharing India', 'earn money leasing car', 'list my car Pune', 'car rental passive income']}
+      />
       {/* Hero Section */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
         <div className="lg:col-span-7 space-y-4">

@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import { Car, UserProfile } from '../types.ts';
 import { Link, useRouter } from '../router.tsx';
+import { SEO } from '../components/SEO.tsx';
 
 interface CarDetailPageProps {
   carId: string;
@@ -174,8 +175,61 @@ export const CarDetailPage: React.FC<CarDetailPageProps> = ({
     }
   };
 
+  const seoTitle = car.seo_title || `Rent ${car.make || ''} ${car.model} (${car.year}) in ${car.city} - ₹${car.price_per_day}/day`;
+  const seoDescription = car.seo_description || car.description || `Book ${car.year} ${car.make} ${car.model} in ${car.city} on Charvi Rental for ₹${car.price_per_day.toLocaleString('en-IN')}/day. ${car.transmission}, ${car.fuel}, ${car.seats} seats. Doorstep delivery & insurance included.`;
+
+  const carJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': ['Car', 'Product'],
+    name: `${car.year} ${car.make} ${car.model}`,
+    image: images,
+    description: seoDescription,
+    brand: {
+      '@type': 'Brand',
+      name: car.make || 'Automobile',
+    },
+    model: car.model,
+    vehicleModelDate: String(car.year),
+    vehicleTransmission: car.transmission,
+    fuelType: car.fuel,
+    seatingCapacity: car.seats,
+    vehicleConfiguration: car.type,
+    offers: {
+      '@type': 'Offer',
+      price: car.price_per_day,
+      priceCurrency: 'INR',
+      availability: car.is_available ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
+      url: `https://charvirental.com/car/${car.id}`,
+      priceValidUntil: '2027-12-31',
+      seller: {
+        '@type': 'Person',
+        name: car.lender_name,
+      },
+    },
+    aggregateRating: {
+      '@type': 'AggregateRating',
+      ratingValue: car.rating ? car.rating.toFixed(2) : '4.95',
+      reviewCount: Math.max(car.reviews_count || 1, 1),
+    },
+  };
+
   return (
     <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-6 sm:space-y-8 transition-colors overflow-x-hidden">
+      <SEO
+        title={seoTitle}
+        description={seoDescription}
+        canonicalPath={`/car/${car.id}`}
+        ogImage={car.image_url}
+        ogType="product"
+        keywords={[
+          `${car.make} ${car.model} rental`,
+          `rent ${car.model} ${car.city}`,
+          `${car.city} self drive car`,
+          `${car.transmission} car rental`,
+          'Charvi Rental car'
+        ]}
+        schema={carJsonLd}
+      />
       {/* Back button & Breadcrumb */}
       <div className="flex flex-wrap items-center gap-1.5 text-xs text-neutral-500 dark:text-neutral-400">
         <Link
@@ -318,15 +372,21 @@ export const CarDetailPage: React.FC<CarDetailPageProps> = ({
           {/* Owner / Host Details Section */}
           <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 p-5 space-y-4 shadow-2xs transition-colors">
             <div className="flex items-start justify-between flex-wrap gap-3">
-              <div className="flex items-center space-x-3 min-w-0">
+              <Link
+                to={`/host/${car.lender_id}`}
+                className="flex items-center space-x-3 min-w-0 group cursor-pointer"
+                title={`View ${car.lender_name}'s public host profile and fleet`}
+              >
                 <img
                   src={car.lender_avatar}
                   alt={car.lender_name}
-                  className="w-12 h-12 rounded-full object-cover border-2 border-orange-200 dark:border-orange-900 shrink-0"
+                  className="w-12 h-12 rounded-full object-cover border-2 border-orange-200 dark:border-orange-900 shrink-0 group-hover:border-orange-500 transition-colors"
                 />
                 <div className="min-w-0">
                   <div className="flex items-center space-x-1.5 flex-wrap gap-1">
-                    <h3 className="font-bold text-sm text-neutral-900 dark:text-white truncate">{car.lender_name}</h3>
+                    <h3 className="font-bold text-sm text-neutral-900 dark:text-white truncate group-hover:text-orange-600 transition-colors">
+                      {car.lender_name}
+                    </h3>
                     <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/80 flex items-center gap-1 shrink-0">
                       <CheckCircle2 className="w-3 h-3" />
                       Verified Host
@@ -335,8 +395,11 @@ export const CarDetailPage: React.FC<CarDetailPageProps> = ({
                   <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5 truncate">
                     Operating verified peer-to-peer vehicles in {car.city}.
                   </p>
+                  <span className="text-[11px] font-bold text-orange-600 dark:text-orange-400 inline-flex items-center gap-0.5 mt-0.5 group-hover:underline">
+                    View Host Profile & Fleet <ChevronRight className="w-3 h-3" />
+                  </span>
                 </div>
-              </div>
+              </Link>
               <div className="text-right shrink-0">
                 <span className="text-[10px] font-bold text-neutral-400 dark:text-neutral-500 uppercase block">Host Rating</span>
                 <span className="text-xs text-amber-600 dark:text-amber-400 font-extrabold flex items-center justify-end gap-1">

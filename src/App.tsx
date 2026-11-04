@@ -44,6 +44,8 @@ import { BecomeHostPage } from './pages/BecomeHostPage.tsx';
 import { ListCarPage } from './pages/ListCarPage.tsx';
 import { ContactPage } from './pages/ContactPage.tsx';
 import { CarDetailPage } from './pages/CarDetailPage.tsx';
+import { LenderProfilePage } from './pages/LenderProfilePage.tsx';
+import { SEO } from './components/SEO.tsx';
 
 // Dedicated Dashboards with fixed sidebar and separate dashboard headers
 import { CustomerDashboard } from './pages/CustomerDashboard.tsx';
@@ -544,9 +546,12 @@ function AppContent() {
     }
   };
 
-  // Route parser for /car/:id
-  const isCarDetailRoute = path.startsWith('/car/');
+  // Route parser for /car/:id and /host/:id
+  const isCarDetailRoute = path.startsWith('/car/') || path.startsWith('/cars/');
   const currentCarId = isCarDetailRoute ? path.split('/')[2] : null;
+
+  const isHostProfileRoute = path.startsWith('/host/') || path.startsWith('/lender-profile/');
+  const currentHostId = isHostProfileRoute ? path.split('/')[2] : null;
 
   // ROUTING CONTENT DETERMINATION
   let mainContent: React.ReactNode = null;
@@ -611,6 +616,14 @@ function AppContent() {
             onSignInRequired={handleSignIn}
             onAddReview={handleAddReview}
           />
+        ) : isHostProfileRoute && currentHostId ? (
+          /* 1.5 DEDICATED PUBLIC HOST / LENDER PROFILE & FLEET */
+          <LenderProfilePage
+            lenderId={currentHostId}
+            allCars={cars}
+            currentUser={user}
+            onSignInRequired={handleSignIn}
+          />
         ) : path === '/about' ? (
           /* 2. ABOUT PAGE */
           <AboutPage />
@@ -650,6 +663,76 @@ function AppContent() {
         ) : (
           /* 8. HOMEPAGE VIEW: 2-COLUMN FILTER GRID + AVAILABLE CARS */
           <div>
+            <SEO
+              title="Charvi Rental - Verified Self-Drive Car Rentals & Host Fleet in India"
+              description="Rent premium self-drive cars in Pune, Mumbai, Delhi NCR, Bengaluru & Hyderabad. Zero security deposit options, verified hosts, doorstep delivery & 24/7 support."
+              canonicalPath="/"
+              ogImage="/assets/hero_cars_crop.png"
+              ogType="website"
+              keywords={[
+                'self drive car rental Pune',
+                'car rental Mumbai',
+                'peer to peer car rental India',
+                'rent SUV without driver',
+                'Charvi Rental fleet',
+                'list your car and earn India',
+                'doorstep car delivery Pune'
+              ]}
+              schema={{
+                '@context': 'https://schema.org',
+                '@graph': [
+                  {
+                    '@type': 'AutoRental',
+                    '@id': 'https://charvirental.com/#autorental',
+                    name: 'Charvi Rental',
+                    url: 'https://charvirental.com',
+                    logo: 'https://charvirental.com/assets/hero_cars_crop.png',
+                    image: 'https://charvirental.com/assets/hero_cars_crop.png',
+                    description: 'India premier peer-to-peer and verified self-drive car rental marketplace.',
+                    telephone: '+91 98765 43210',
+                    priceRange: '₹₹',
+                    address: {
+                      '@type': 'PostalAddress',
+                      streetAddress: 'Wakad',
+                      addressLocality: 'Pune',
+                      addressRegion: 'Maharashtra',
+                      postalCode: '411057',
+                      addressCountry: 'IN',
+                    },
+                    geo: {
+                      '@type': 'GeoCoordinates',
+                      latitude: 18.5987,
+                      longitude: 73.7684,
+                    },
+                    areaServed: [
+                      { '@type': 'City', name: 'Pune' },
+                      { '@type': 'City', name: 'Mumbai' },
+                      { '@type': 'City', name: 'Delhi NCR' },
+                      { '@type': 'City', name: 'Bengaluru' },
+                      { '@type': 'City', name: 'Hyderabad' },
+                      { '@type': 'City', name: 'Goa' },
+                    ],
+                    openingHoursSpecification: {
+                      '@type': 'OpeningHoursSpecification',
+                      dayOfWeek: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'],
+                      opens: '00:00',
+                      closes: '23:59',
+                    },
+                  },
+                  {
+                    '@type': 'WebSite',
+                    '@id': 'https://charvirental.com/#website',
+                    url: 'https://charvirental.com',
+                    name: 'Charvi Rental',
+                    potentialAction: {
+                      '@type': 'SearchAction',
+                      target: 'https://charvirental.com/?search={search_term_string}',
+                      'query-input': 'required name=search_term_string',
+                    },
+                  },
+                ],
+              }}
+            />
             {/* 2-COLUMN FILTER SEARCH BAR WITH ANDROID GPS DETECT */}
             <HeroSearchBar
               filters={filters}

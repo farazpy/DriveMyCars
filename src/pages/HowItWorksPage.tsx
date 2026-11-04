@@ -12,12 +12,20 @@ import {
   ArrowRight
 } from 'lucide-react';
 import { Link } from '../router.tsx';
+import { SEO } from '../components/SEO.tsx';
 
 export const HowItWorksPage: React.FC = () => {
   const [tab, setTab] = useState<'renter' | 'lender'>('renter');
 
   return (
     <div className="w-full px-4 sm:px-8 lg:px-12 py-10 sm:py-16 space-y-12">
+      <SEO
+        title="How Charvi Rental Works - Instant Self-Drive Car Rental Guide"
+        description="Learn how to rent verified self-drive vehicles or list your car to earn on Charvi Rental. Simple booking, doorstep delivery, and 24/7 roadside assistance."
+        canonicalPath="/how-it-works"
+        ogType="website"
+        keywords={['how car rental works', 'self drive booking guide', 'list car on Charvi Rental']}
+      />
       {/* Header */}
       <div className="text-center max-w-2xl mx-auto space-y-3">
         <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full text-xs font-semibold bg-orange-50 text-orange-700 border border-orange-200">

@@ -5,6 +5,11 @@ export interface PlatformSettings {
   brand_name: string;
   brand_tagline: string;
   logo_url: string;
+  favicon_png_96_url?: string;
+  favicon_svg_url?: string;
+  favicon_ico_url?: string;
+  apple_touch_icon_url?: string;
+  webmanifest_url?: string;
   contact_email: string;
   contact_phone: string;
   contact_address: string;
@@ -30,6 +35,11 @@ export const DEFAULT_PLATFORM_SETTINGS: PlatformSettings = {
   brand_name: 'Charvi Rental',
   brand_tagline: 'Self-Drive Fleet · India',
   logo_url: '',
+  favicon_png_96_url: '/favicon-96x96.png',
+  favicon_svg_url: '/favicon.svg',
+  favicon_ico_url: '/favicon.ico',
+  apple_touch_icon_url: '/apple-touch-icon.png',
+  webmanifest_url: '/site.webmanifest',
   contact_email: 'operationalhtklabs@gmail.com',
   contact_phone: '+91 98765 43210',
   contact_address: 'Wakad, Pune, Maharashtra, India',
@@ -84,6 +94,33 @@ export const PlatformSettingsProvider: React.FC<{ children: React.ReactNode }> =
   useEffect(() => {
     fetchSettings();
   }, [fetchSettings]);
+
+  // Dynamically reflect uploaded favicons, icons and manifest live in document.head
+  useEffect(() => {
+    if (!settings) return;
+
+    const setHeadLink = (rel: string, href: string | undefined, defaultHref: string, attrs: Record<string, string> = {}) => {
+      const targetHref = href || defaultHref;
+      let selector = `link[rel="${rel}"]`;
+      if (attrs.type) selector += `[type="${attrs.type}"]`;
+      if (attrs.sizes) selector += `[sizes="${attrs.sizes}"]`;
+
+      let link = document.querySelector(selector) as HTMLLinkElement | null;
+      if (!link) {
+        link = document.createElement('link');
+        link.rel = rel;
+        Object.entries(attrs).forEach(([k, v]) => link!.setAttribute(k, v));
+        document.head.appendChild(link);
+      }
+      link.href = targetHref;
+    };
+
+    setHeadLink('icon', settings.favicon_png_96_url, '/favicon-96x96.png', { type: 'image/png', sizes: '96x96' });
+    setHeadLink('icon', settings.favicon_svg_url, '/favicon.svg', { type: 'image/svg+xml' });
+    setHeadLink('shortcut icon', settings.favicon_ico_url, '/favicon.ico');
+    setHeadLink('apple-touch-icon', settings.apple_touch_icon_url, '/apple-touch-icon.png', { sizes: '180x180' });
+    setHeadLink('manifest', settings.webmanifest_url, '/site.webmanifest');
+  }, [settings]);
 
   const updateSettings = async (updates: Partial<PlatformSettings>): Promise<boolean> => {
     try {

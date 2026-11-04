@@ -11,10 +11,18 @@ import {
   ArrowRight
 } from 'lucide-react';
 import { Link } from '../router.tsx';
+import { SEO } from '../components/SEO.tsx';
 
 export const AboutPage: React.FC = () => {
   return (
     <div className="w-full px-4 sm:px-8 lg:px-12 py-10 sm:py-16 space-y-16 transition-colors">
+      <SEO
+        title="About Charvi Rental - India's Trusted Self-Drive Car Rental Fleet"
+        description="Learn about Charvi Rental, India's premier peer-to-peer self-drive vehicle platform. Connecting discerning travelers directly with vetted local vehicle hosts."
+        canonicalPath="/about"
+        ogType="website"
+        keywords={['about Charvi Rental', 'car sharing company India', 'peer to peer car rental mission']}
+      />
       {/* Hero Section */}
       <div className="text-center max-w-3xl mx-auto space-y-4">
         <div className="inline-flex items-center space-x-2 px-3.5 py-1.5 rounded-full text-xs font-extrabold bg-orange-50 dark:bg-orange-950/60 text-orange-700 dark:text-orange-300 border border-orange-200 dark:border-orange-800">

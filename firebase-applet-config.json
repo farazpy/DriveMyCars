@@ -1,11 +1,9 @@
 {
-  "projectId": "gen-lang-client-0565619494",
-  "appId": "1:997703203806:web:e68646390a89e51596fb4f",
-  "apiKey": "AIzaSyBZ3wTEezFBBceVSPuFg9NnWiL_cx9xuYc",
-  "authDomain": "gen-lang-client-0565619494.firebaseapp.com",
-  "storageBucket": "gen-lang-client-0565619494.firebasestorage.app",
-  "messagingSenderId": "997703203806",
-  "measurementId": "",
-  "oAuthClientId": "997703203806-43dh8qtf447a3nnfvqfvhv827pnlmivi.apps.googleusercontent.com",
-  "recaptchaSiteKey": ""
+  "projectId": "charvi-rentals",
+  "appId": "1:131646792517:web:95c03d16b32d3c33f8942c",
+  "apiKey": "AIzaSyBxEoagwYU_cUq1w4E7ANMW8BsekLoYdbU",
+  "authDomain": "charvi-rentals.firebaseapp.com",
+  "storageBucket": "charvi-rentals.firebasestorage.app",
+  "messagingSenderId": "131646792517",
+  "measurementId": "G-Z05CRWVL78"
 }

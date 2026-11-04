@@ -10,10 +10,18 @@ import {
   AlertCircle
 } from 'lucide-react';
 import { Link } from '../router.tsx';
+import { SEO } from '../components/SEO.tsx';
 
 export const InsurancePage: React.FC = () => {
   return (
     <div className="w-full px-4 sm:px-8 lg:px-12 py-10 sm:py-16 space-y-14 transition-colors">
+      <SEO
+        title="Insurance & Protection - Safe Self-Drive Car Rentals | Charvi Rental"
+        description="Every trip booked through Charvi Rental includes certified insurance coverage, 24/7 roadside assistance, and damage protection across India."
+        canonicalPath="/insurance-protection"
+        ogType="website"
+        keywords={['car rental insurance India', 'self drive damage protection', 'roadside assistance car rental']}
+      />
       {/* Header */}
       <div className="text-center max-w-2xl mx-auto space-y-3">
         <div className="inline-flex items-center space-x-2 px-3.5 py-1.5 rounded-full text-xs font-extrabold bg-emerald-50 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">

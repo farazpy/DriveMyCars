@@ -10,6 +10,8 @@ import {
   Sparkles
 } from 'lucide-react';
 
+import { SEO } from '../components/SEO.tsx';
+
 export const ContactPage: React.FC = () => {
   const [formSubmitted, setFormSubmitted] = useState(false);
   const [name, setName] = useState('');
@@ -43,8 +45,29 @@ export const ContactPage: React.FC = () => {
     }
   ];
 
+  const faqSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: FAQS.map((f) => ({
+      '@type': 'Question',
+      name: f.q,
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: f.a,
+      },
+    })),
+  };
+
   return (
     <div className="w-full px-4 sm:px-8 lg:px-12 py-10 sm:py-16 space-y-16">
+      <SEO
+        title="24/7 Customer Support & Roadside Care | Charvi Rental"
+        description="Get in touch with Charvi Rental 24/7 support. Instant roadside concierge, booking assistance, and host queries across India."
+        canonicalPath="/contact"
+        ogType="website"
+        keywords={['Charvi Rental contact', 'car rental support Pune', 'roadside assistance phone number']}
+        schema={faqSchema}
+      />
       {/* Header */}
       <div className="text-center max-w-2xl mx-auto space-y-3">
         <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full text-xs font-semibold bg-orange-50 text-orange-700 border border-orange-200">

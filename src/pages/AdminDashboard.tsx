@@ -73,6 +73,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const [settingsForm, setSettingsForm] = useState<PlatformSettings>(settings);
   const [savingSettings, setSavingSettings] = useState(false);
   const [isUploadingLogo, setIsUploadingLogo] = useState(false);
+  const [uploadingFaviconKey, setUploadingFaviconKey] = useState<string | null>(null);
 
   useEffect(() => {
     if (settings) {
@@ -325,6 +326,39 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     } finally {
       setIsUploadingLogo(false);
       if (e.target) e.target.value = '';
+    }
+  };
+
+  const handleFaviconUpload = async (
+    fieldKey: 'favicon_png_96_url' | 'favicon_svg_url' | 'favicon_ico_url' | 'apple_touch_icon_url' | 'webmanifest_url',
+    file: File,
+    label: string
+  ) => {
+    if (!file) return;
+    setUploadingFaviconKey(fieldKey);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('caption', `Platform ${label}`);
+      formData.append('file_name', file.name);
+
+      const res = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+      });
+      const data = await res.json();
+      if (res.ok && (data.file_url || data.direct_link)) {
+        const fileUrl = data.direct_link || data.file_url;
+        setSettingsForm(prev => ({ ...prev, [fieldKey]: fileUrl }));
+        showNotification(`${label} uploaded to S3! Click Save to activate on live site.`);
+      } else {
+        showNotification(data.error || `Failed to upload ${label}.`);
+      }
+    } catch (err) {
+      console.error(`Upload error for ${fieldKey}:`, err);
+      showNotification(`Network error uploading ${label}.`);
+    } finally {
+      setUploadingFaviconKey(null);
     }
   };
 
@@ -1750,6 +1784,137 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         </div>
                       </div>
                     </div>
+
+                      {/* Favicons & App Manifest Assets Section */}
+                      <div className="space-y-4 pt-4 border-t border-neutral-100 dark:border-neutral-800">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <label className="block text-xs font-black text-neutral-900 dark:text-white uppercase tracking-wider">
+                              Favicons, Touch Icons &amp; Web Manifest (S3 Backed)
+                            </label>
+                            <p className="text-[11px] text-neutral-500 dark:text-neutral-400">
+                              Upload each icon asset. Every file is uploaded to S3, saved to MySQL, and live-reflected in browser head tags.
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="space-y-3">
+                          {[
+                            {
+                              key: 'favicon_png_96_url' as const,
+                              label: 'PNG Favicon (96x96)',
+                              tag: '<link rel="icon" type="image/png" href="..." sizes="96x96" />',
+                              accept: 'image/png,image/*',
+                              defaultUrl: '/favicon-96x96.png',
+                              desc: 'Standard 96x96 PNG icon for modern browser tabs.',
+                            },
+                            {
+                              key: 'favicon_svg_url' as const,
+                              label: 'Vector SVG Favicon',
+                              tag: '<link rel="icon" type="image/svg+xml" href="..." />',
+                              accept: 'image/svg+xml,.svg,image/*',
+                              defaultUrl: '/favicon.svg',
+                              desc: 'Scalable vector icon for high-DPI crisp browser tab display.',
+                            },
+                            {
+                              key: 'favicon_ico_url' as const,
+                              label: 'Shortcut ICO Favicon',
+                              tag: '<link rel="shortcut icon" href="..." />',
+                              accept: '.ico,image/x-icon,image/vnd.microsoft.icon,image/*',
+                              defaultUrl: '/favicon.ico',
+                              desc: 'Legacy ICO icon for desktop shortcuts and older browsers.',
+                            },
+                            {
+                              key: 'apple_touch_icon_url' as const,
+                              label: 'Apple Touch Icon (180x180)',
+                              tag: '<link rel="apple-touch-icon" sizes="180x180" href="..." />',
+                              accept: 'image/png,image/*',
+                              defaultUrl: '/apple-touch-icon.png',
+                              desc: '180x180 PNG icon used when adding site to iOS Home Screen.',
+                            },
+                            {
+                              key: 'webmanifest_url' as const,
+                              label: 'Web App Manifest (site.webmanifest)',
+                              tag: '<link rel="manifest" href="..." />',
+                              accept: '.webmanifest,.json,application/json,text/plain,*/*',
+                              defaultUrl: '/site.webmanifest',
+                              desc: 'JSON Web Manifest file for PWA installability and Android app metadata.',
+                            },
+                          ].map((item) => {
+                            const currentValue = settingsForm[item.key] || item.defaultUrl;
+                            const isUploading = uploadingFaviconKey === item.key;
+                            const isS3Url = currentValue.startsWith('http://') || currentValue.startsWith('https://');
+
+                            return (
+                              <div
+                                key={item.key}
+                                className="p-3.5 rounded-2xl bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 space-y-2"
+                              >
+                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                                  <div>
+                                    <span className="font-bold text-xs text-neutral-900 dark:text-white block">
+                                      {item.label}
+                                    </span>
+                                    <span className="text-[10px] font-mono text-orange-600 dark:text-orange-400 block">
+                                      {item.tag}
+                                    </span>
+                                  </div>
+                                  <span
+                                    className={`text-[10px] font-bold px-2 py-0.5 rounded-full border w-fit ${
+                                      isS3Url
+                                        ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800'
+                                        : 'bg-neutral-200 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400 border-neutral-300 dark:border-neutral-700'
+                                    }`}
+                                  >
+                                    {isS3Url ? '✓ S3 Cloud Backed' : 'Default Asset'}
+                                  </span>
+                                </div>
+
+                                <p className="text-[11px] text-neutral-500 dark:text-neutral-400">{item.desc}</p>
+
+                                <div className="flex flex-col sm:flex-row items-center gap-2">
+                                  <input
+                                    type="text"
+                                    value={currentValue}
+                                    onChange={(e) => setSettingsForm({ ...settingsForm, [item.key]: e.target.value })}
+                                    placeholder={item.defaultUrl}
+                                    className="flex-1 w-full px-3 py-1.5 rounded-xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 text-xs font-mono focus:border-orange-500 focus:outline-none"
+                                  />
+
+                                  <div className="flex items-center gap-2 w-full sm:w-auto shrink-0">
+                                    <label className="inline-flex items-center justify-center space-x-1.5 px-3 py-1.5 rounded-xl bg-neutral-900 dark:bg-neutral-800 hover:bg-neutral-800 text-white text-xs font-bold cursor-pointer transition-colors w-full sm:w-auto text-center">
+                                      <Upload className="w-3.5 h-3.5 text-orange-400" />
+                                      <span>{isUploading ? 'Uploading to S3...' : 'Upload File'}</span>
+                                      <input
+                                        type="file"
+                                        accept={item.accept}
+                                        onChange={(e) => {
+                                          const f = e.target.files?.[0];
+                                          if (f) handleFaviconUpload(item.key, f, item.label);
+                                          e.target.value = '';
+                                        }}
+                                        disabled={isUploading}
+                                        className="hidden"
+                                      />
+                                    </label>
+
+                                    {settingsForm[item.key] && (
+                                      <button
+                                        type="button"
+                                        onClick={() => setSettingsForm({ ...settingsForm, [item.key]: '' })}
+                                        className="px-2.5 py-1.5 rounded-xl border border-neutral-200 dark:border-neutral-700 hover:bg-neutral-100 dark:hover:bg-neutral-800 text-xs font-bold text-neutral-500 cursor-pointer"
+                                        title="Reset to default asset path"
+                                      >
+                                        Reset
+                                      </button>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
 
                     {/* Social Media Links */}
                     <div className="p-5 sm:p-6 rounded-3xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 space-y-4">

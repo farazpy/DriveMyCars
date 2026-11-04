@@ -29,6 +29,7 @@ import { UserProfile } from '../types.ts';
 import { Link, useRouter } from '../router.tsx';
 import { signUpWithEmail, signInWithEmail } from '../firebase.ts';
 import { GooglePlaceAutocompleteInput } from '../components/GooglePlaceAutocompleteInput.tsx';
+import { SEO } from '../components/SEO.tsx';
 
 interface BecomeHostPageProps {
   user: UserProfile | null;
@@ -346,6 +347,13 @@ export const BecomeHostPage: React.FC<BecomeHostPageProps> = ({
 
   return (
     <div className="min-h-screen bg-[#fafafa] dark:bg-neutral-950 text-neutral-900 dark:text-neutral-100 font-sans transition-colors py-8 sm:py-12">
+      <SEO
+        title="Become a Host - Rent Out Your Car & Earn | Charvi Rental"
+        description="Register as a verified vehicle host on Charvi Rental. Monetize your personal or commercial fleet with guaranteed insurance coverage and verified KYC guests."
+        canonicalPath="/become-a-host"
+        ogType="website"
+        keywords={['become a car host', 'rent out my car Pune', 'lender registration Charvi Rental', 'car sharing host India']}
+      />
       <div className="w-full px-4 sm:px-8 lg:px-12 space-y-8">
         
         {/* Header Breadcrumb */}
