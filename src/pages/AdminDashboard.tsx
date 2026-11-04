@@ -73,6 +73,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const [settingsForm, setSettingsForm] = useState<PlatformSettings>(settings);
   const [savingSettings, setSavingSettings] = useState(false);
   const [isUploadingLogo, setIsUploadingLogo] = useState(false);
+  const [isUploadingDarkLogo, setIsUploadingDarkLogo] = useState(false);
   const [uploadingFaviconKey, setUploadingFaviconKey] = useState<string | null>(null);
 
   useEffect(() => {
@@ -325,6 +326,37 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       showNotification('Network error uploading logo.');
     } finally {
       setIsUploadingLogo(false);
+      if (e.target) e.target.value = '';
+    }
+  };
+
+  const handleDarkLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setIsUploadingDarkLogo(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('caption', 'Platform Dark Mode Brand Logo');
+      formData.append('file_name', file.name);
+
+      const res = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+      });
+      const data = await res.json();
+      if (res.ok && (data.file_url || data.direct_link)) {
+        const logoUrl = data.direct_link || data.file_url;
+        setSettingsForm(prev => ({ ...prev, logo_dark_url: logoUrl }));
+        showNotification('Dark Mode logo uploaded to S3! Click Save to apply.');
+      } else {
+        showNotification(data.error || 'Failed to upload dark mode logo.');
+      }
+    } catch (err) {
+      console.error('Dark logo upload error:', err);
+      showNotification('Network error uploading dark mode logo.');
+    } finally {
+      setIsUploadingDarkLogo(false);
       if (e.target) e.target.value = '';
     }
   };
@@ -1726,59 +1758,128 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         />
                       </div>
 
-                      {/* Logo Configuration */}
-                      <div className="space-y-3 pt-2">
-                        <label className="block text-[11px] font-bold text-neutral-700 dark:text-neutral-300 uppercase tracking-wider">
-                          Custom Logo Image
+                      {/* Logo Configuration: Light & Dark Mode */}
+                      <div className="space-y-4 pt-2">
+                        <label className="block text-xs font-black text-neutral-900 dark:text-white uppercase tracking-wider">
+                          Brand Logos (Light &amp; Dark Theme Support)
                         </label>
 
-                        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 p-4 rounded-2xl bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800">
-                          <div className="w-24 h-16 rounded-xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 flex items-center justify-center p-2 shrink-0 overflow-hidden">
-                            {settingsForm.logo_url ? (
-                              <img
-                                src={settingsForm.logo_url}
-                                alt="Logo Preview"
-                                className="max-h-full max-w-full object-contain"
-                              />
-                            ) : (
-                              <div className="flex flex-col items-center text-neutral-400">
-                                <CarIcon className="w-6 h-6 text-orange-600 mb-0.5" />
-                                <span className="text-[9px] font-bold">Default Icon</span>
-                              </div>
-                            )}
-                          </div>
-
-                          <div className="flex-1 space-y-2 w-full">
-                            <input
-                              type="url"
-                              value={settingsForm.logo_url}
-                              onChange={e => setSettingsForm({ ...settingsForm, logo_url: e.target.value })}
-                              placeholder="Direct Image URL (https://.../logo.png)"
-                              className="w-full px-3 py-2 rounded-xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 text-xs font-mono focus:border-orange-500 focus:outline-none"
-                            />
-
-                            <div className="flex flex-wrap items-center gap-2">
-                              <label className="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-neutral-900 dark:bg-neutral-800 hover:bg-neutral-800 text-white text-xs font-bold cursor-pointer transition-colors">
-                                <Upload className="w-3.5 h-3.5 text-orange-400" />
-                                <span>{isUploadingLogo ? 'Uploading...' : 'Upload Logo to S3'}</span>
-                                <input
-                                  type="file"
-                                  accept="image/*"
-                                  onChange={handleLogoUpload}
-                                  disabled={isUploadingLogo}
-                                  className="hidden"
+                        {/* Light Mode Logo */}
+                        <div className="space-y-1.5">
+                          <span className="text-[11px] font-bold text-neutral-700 dark:text-neutral-300 block">
+                            Light Mode Logo (Displayed on White/Light Backgrounds)
+                          </span>
+                          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 p-3.5 rounded-2xl bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800">
+                            <div className="w-24 h-14 rounded-xl border border-neutral-200 dark:border-neutral-700 bg-white flex items-center justify-center p-2 shrink-0 overflow-hidden">
+                              {settingsForm.logo_url ? (
+                                <img
+                                  src={settingsForm.logo_url}
+                                  alt="Light Logo Preview"
+                                  className="max-h-full max-w-full object-contain"
                                 />
-                              </label>
-
-                              {settingsForm.logo_url && (
-                                <button
-                                  type="button"
-                                  onClick={() => setSettingsForm({ ...settingsForm, logo_url: '' })}
-                                  className="px-3 py-1.5 rounded-xl border border-neutral-200 dark:border-neutral-700 hover:bg-neutral-100 dark:hover:bg-neutral-800 text-xs font-bold text-neutral-600 dark:text-neutral-300 cursor-pointer"
-                                >
-                                  Reset to Default Icon
-                                </button>
+                              ) : (
+                                <div className="flex flex-col items-center text-neutral-400">
+                                  <CarIcon className="w-5 h-5 text-orange-600 mb-0.5" />
+                                  <span className="text-[9px] font-bold">Default Light</span>
+                                </div>
                               )}
+                            </div>
+
+                            <div className="flex-1 space-y-2 w-full">
+                              <input
+                                type="url"
+                                value={settingsForm.logo_url}
+                                onChange={e => setSettingsForm({ ...settingsForm, logo_url: e.target.value })}
+                                placeholder="Light Logo URL (https://.../logo-light.png)"
+                                className="w-full px-3 py-1.5 rounded-xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 text-xs font-mono focus:border-orange-500 focus:outline-none"
+                              />
+
+                              <div className="flex flex-wrap items-center gap-2">
+                                <label className="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-neutral-900 dark:bg-neutral-800 hover:bg-neutral-800 text-white text-xs font-bold cursor-pointer transition-colors">
+                                  <Upload className="w-3.5 h-3.5 text-orange-400" />
+                                  <span>{isUploadingLogo ? 'Uploading to S3...' : 'Upload Light Logo'}</span>
+                                  <input
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={handleLogoUpload}
+                                    disabled={isUploadingLogo}
+                                    className="hidden"
+                                  />
+                                </label>
+
+                                {settingsForm.logo_url && (
+                                  <button
+                                    type="button"
+                                    onClick={() => setSettingsForm({ ...settingsForm, logo_url: '' })}
+                                    className="px-2.5 py-1.5 rounded-xl border border-neutral-200 dark:border-neutral-700 hover:bg-neutral-100 dark:hover:bg-neutral-800 text-xs font-bold text-neutral-500 cursor-pointer"
+                                  >
+                                    Reset Light Logo
+                                  </button>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Dark Mode Logo */}
+                        <div className="space-y-1.5">
+                          <span className="text-[11px] font-bold text-neutral-700 dark:text-neutral-300 block">
+                            Dark Mode Logo (Displayed on Dark/Night Backgrounds)
+                          </span>
+                          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 p-3.5 rounded-2xl bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800">
+                            <div className="w-24 h-14 rounded-xl border border-neutral-700 bg-neutral-900 flex items-center justify-center p-2 shrink-0 overflow-hidden">
+                              {settingsForm.logo_dark_url ? (
+                                <img
+                                  src={settingsForm.logo_dark_url}
+                                  alt="Dark Logo Preview"
+                                  className="max-h-full max-w-full object-contain"
+                                />
+                              ) : settingsForm.logo_url ? (
+                                <img
+                                  src={settingsForm.logo_url}
+                                  alt="Fallback Logo"
+                                  className="max-h-full max-w-full object-contain opacity-70"
+                                />
+                              ) : (
+                                <div className="flex flex-col items-center text-neutral-400">
+                                  <CarIcon className="w-5 h-5 text-orange-500 mb-0.5" />
+                                  <span className="text-[9px] font-bold">Default Dark</span>
+                                </div>
+                              )}
+                            </div>
+
+                            <div className="flex-1 space-y-2 w-full">
+                              <input
+                                type="url"
+                                value={settingsForm.logo_dark_url || ''}
+                                onChange={e => setSettingsForm({ ...settingsForm, logo_dark_url: e.target.value })}
+                                placeholder="Dark Logo URL (https://.../logo-dark.png)"
+                                className="w-full px-3 py-1.5 rounded-xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 text-xs font-mono focus:border-orange-500 focus:outline-none"
+                              />
+
+                              <div className="flex flex-wrap items-center gap-2">
+                                <label className="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-neutral-900 dark:bg-neutral-800 hover:bg-neutral-800 text-white text-xs font-bold cursor-pointer transition-colors">
+                                  <Upload className="w-3.5 h-3.5 text-orange-400" />
+                                  <span>{isUploadingDarkLogo ? 'Uploading to S3...' : 'Upload Dark Logo'}</span>
+                                  <input
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={handleDarkLogoUpload}
+                                    disabled={isUploadingDarkLogo}
+                                    className="hidden"
+                                  />
+                                </label>
+
+                                {settingsForm.logo_dark_url && (
+                                  <button
+                                    type="button"
+                                    onClick={() => setSettingsForm({ ...settingsForm, logo_dark_url: '' })}
+                                    className="px-2.5 py-1.5 rounded-xl border border-neutral-200 dark:border-neutral-700 hover:bg-neutral-100 dark:hover:bg-neutral-800 text-xs font-bold text-neutral-500 cursor-pointer"
+                                  >
+                                    Reset Dark Logo
+                                  </button>
+                                )}
+                              </div>
                             </div>
                           </div>
                         </div>
@@ -2058,42 +2159,90 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                       </div>
                     </div>
 
-                    {/* Live Preview Card */}
+                    {/* Live Preview Card (Light & Dark Theme Preview) */}
                     <div className="p-5 rounded-3xl border border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-950 space-y-3">
                       <span className="text-[11px] font-black uppercase text-neutral-400 tracking-wider block">
-                        Live Brand Header Preview
+                        Live Brand Header Preview (Dual Mode)
                       </span>
-                      <div className="p-3.5 rounded-2xl bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 flex items-center justify-between">
-                        <div className="flex items-center space-x-2.5">
-                          {settingsForm.logo_url ? (
-                            <img
-                              src={settingsForm.logo_url}
-                              alt="Brand Logo"
-                              className="h-8 max-w-[120px] object-contain rounded"
-                            />
-                          ) : (
-                            <div className="w-8 h-8 rounded-xl bg-orange-600 text-white flex items-center justify-center font-bold">
-                              <CarIcon className="w-4 h-4" />
-                            </div>
-                          )}
-                          <div>
-                            <div className="flex items-center space-x-1.5">
-                              <span className="font-extrabold text-sm text-neutral-900 dark:text-white">
-                                {settingsForm.brand_name || 'Brand Name'}
-                              </span>
-                              <span className="text-[9px] px-1 py-0.2 rounded bg-orange-100 text-orange-700 font-bold">
-                                v1.3.5
-                              </span>
-                            </div>
-                            <span className="text-[10px] text-neutral-400 block -mt-0.5">
-                              {settingsForm.brand_tagline || 'Self-Drive Fleet'}
-                            </span>
-                          </div>
-                        </div>
 
-                        <span className="text-[11px] font-bold text-orange-600 font-mono">
-                          {settingsForm.domain_name}
-                        </span>
+                      {/* Light Theme Preview */}
+                      <div className="space-y-1">
+                        <span className="text-[10px] font-bold text-neutral-500 uppercase block">Light Theme Preview</span>
+                        <div className="p-3 rounded-2xl bg-white border border-neutral-200 text-neutral-900 flex items-center justify-between shadow-2xs">
+                          <div className="flex items-center space-x-2.5">
+                            {settingsForm.logo_url ? (
+                              <img
+                                src={settingsForm.logo_url}
+                                alt="Light Logo"
+                                className="h-7 max-w-[120px] object-contain rounded"
+                              />
+                            ) : (
+                              <div className="w-7 h-7 rounded-lg bg-orange-600 text-white flex items-center justify-center font-bold">
+                                <CarIcon className="w-3.5 h-3.5" />
+                              </div>
+                            )}
+                            <div>
+                              <div className="flex items-center space-x-1.5">
+                                <span className="font-extrabold text-xs text-neutral-900">
+                                  {settingsForm.brand_name || 'Brand Name'}
+                                </span>
+                                <span className="text-[8px] px-1 py-0.2 rounded bg-orange-100 text-orange-700 font-bold">
+                                  v1.5.6
+                                </span>
+                              </div>
+                              <span className="text-[9px] text-neutral-400 block -mt-0.5">
+                                {settingsForm.brand_tagline || 'Self-Drive Fleet'}
+                              </span>
+                            </div>
+                          </div>
+
+                          <span className="text-[10px] font-bold text-orange-600 font-mono">
+                            {settingsForm.domain_name}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Dark Theme Preview */}
+                      <div className="space-y-1">
+                        <span className="text-[10px] font-bold text-neutral-400 uppercase block">Dark Theme Preview</span>
+                        <div className="p-3 rounded-2xl bg-neutral-900 border border-neutral-800 text-white flex items-center justify-between shadow-2xs">
+                          <div className="flex items-center space-x-2.5">
+                            {settingsForm.logo_dark_url ? (
+                              <img
+                                src={settingsForm.logo_dark_url}
+                                alt="Dark Logo"
+                                className="h-7 max-w-[120px] object-contain rounded"
+                              />
+                            ) : settingsForm.logo_url ? (
+                              <img
+                                src={settingsForm.logo_url}
+                                alt="Light Logo Fallback"
+                                className="h-7 max-w-[120px] object-contain rounded opacity-80"
+                              />
+                            ) : (
+                              <div className="w-7 h-7 rounded-lg bg-orange-600 text-white flex items-center justify-center font-bold">
+                                <CarIcon className="w-3.5 h-3.5" />
+                              </div>
+                            )}
+                            <div>
+                              <div className="flex items-center space-x-1.5">
+                                <span className="font-extrabold text-xs text-white">
+                                  {settingsForm.brand_name || 'Brand Name'}
+                                </span>
+                                <span className="text-[8px] px-1 py-0.2 rounded bg-orange-950/80 text-orange-300 border border-orange-800 font-bold">
+                                  v1.5.6
+                                </span>
+                              </div>
+                              <span className="text-[9px] text-neutral-400 block -mt-0.5">
+                                {settingsForm.brand_tagline || 'Self-Drive Fleet'}
+                              </span>
+                            </div>
+                          </div>
+
+                          <span className="text-[10px] font-bold text-orange-400 font-mono">
+                            {settingsForm.domain_name}
+                          </span>
+                        </div>
                       </div>
                     </div>
                   </div>

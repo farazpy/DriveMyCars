@@ -5,6 +5,7 @@ export interface PlatformSettings {
   brand_name: string;
   brand_tagline: string;
   logo_url: string;
+  logo_dark_url?: string;
   favicon_png_96_url?: string;
   favicon_svg_url?: string;
   favicon_ico_url?: string;
@@ -35,6 +36,7 @@ export const DEFAULT_PLATFORM_SETTINGS: PlatformSettings = {
   brand_name: 'Charvi Rental',
   brand_tagline: 'Self-Drive Fleet · India',
   logo_url: '',
+  logo_dark_url: '',
   favicon_png_96_url: '/favicon-96x96.png',
   favicon_svg_url: '/favicon.svg',
   favicon_ico_url: '/favicon.ico',

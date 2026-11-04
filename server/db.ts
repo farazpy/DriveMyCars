@@ -27,6 +27,7 @@ export interface PlatformSettings {
   brand_name: string;
   brand_tagline: string;
   logo_url: string;
+  logo_dark_url?: string;
   favicon_png_96_url?: string;
   favicon_svg_url?: string;
   favicon_ico_url?: string;
@@ -63,6 +64,7 @@ let memSettings: PlatformSettings = {
   brand_name: 'Charvi Rental',
   brand_tagline: 'Self-Drive Fleet · India',
   logo_url: '',
+  logo_dark_url: '',
   favicon_png_96_url: '/favicon-96x96.png',
   favicon_svg_url: '/favicon.svg',
   favicon_ico_url: '/favicon.ico',
@@ -333,6 +335,7 @@ export async function initDatabase() {
 
     // Migration: ensure new site config columns exist
     const newSettingsCols = [
+      { name: 'logo_dark_url', type: 'TEXT' },
       { name: 'favicon_png_96_url', type: 'TEXT' },
       { name: 'favicon_svg_url', type: 'TEXT' },
       { name: 'favicon_ico_url', type: 'TEXT' },
@@ -1496,6 +1499,7 @@ export async function getPlatformSettings(): Promise<PlatformSettings> {
           brand_name: (rows[0].brand_name && rows[0].brand_name !== 'DriveMyCarz') ? rows[0].brand_name : 'Charvi Rental',
           brand_tagline: rows[0].brand_tagline || 'Self-Drive Fleet · India',
           logo_url: rows[0].logo_url || '',
+          logo_dark_url: rows[0].logo_dark_url || '',
           favicon_png_96_url: rows[0].favicon_png_96_url || '/favicon-96x96.png',
           favicon_svg_url: rows[0].favicon_svg_url || '/favicon.svg',
           favicon_ico_url: rows[0].favicon_ico_url || '/favicon.ico',
@@ -1542,6 +1546,7 @@ export async function updatePlatformSettings(updates: Partial<PlatformSettings>)
         'brand_name',
         'brand_tagline',
         'logo_url',
+        'logo_dark_url',
         'favicon_png_96_url',
         'favicon_svg_url',
         'favicon_ico_url',
