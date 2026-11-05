@@ -65,23 +65,12 @@ export const Navbar: React.FC<NavbarProps> = ({
         {/* Left: Brand Logo + Header Version Badge + City Selector */}
         <div className="flex items-center space-x-2 sm:space-x-4 lg:space-x-5 min-w-0">
           <Link to="/" className="flex items-center space-x-2 sm:space-x-2.5 group min-w-0 shrink">
-            {settings.logo_url || settings.logo_dark_url ? (
-              <>
-                {settings.logo_url && (
-                  <img
-                    src={settings.logo_url}
-                    alt={settings.brand_name}
-                    className={`h-8 sm:h-10 max-w-[90px] xs:max-w-[120px] sm:max-w-[150px] object-contain rounded-lg shrink-0 ${settings.logo_dark_url ? 'dark:hidden' : ''}`}
-                  />
-                )}
-                {settings.logo_dark_url && (
-                  <img
-                    src={settings.logo_dark_url}
-                    alt={settings.brand_name}
-                    className={`h-8 sm:h-10 max-w-[90px] xs:max-w-[120px] sm:max-w-[150px] object-contain rounded-lg shrink-0 ${settings.logo_url ? 'hidden dark:block' : ''}`}
-                  />
-                )}
-              </>
+            {settings.logo_url ? (
+              <img
+                src={settings.logo_url}
+                alt={settings.brand_name}
+                className="h-8 sm:h-10 max-w-[90px] xs:max-w-[120px] sm:max-w-[150px] object-contain rounded-lg shrink-0"
+              />
             ) : (
               <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl sm:rounded-2xl bg-orange-600 hover:bg-orange-500 flex items-center justify-center text-white shadow-sm shadow-orange-600/20 group-hover:scale-105 transition-all duration-200 ease-out shrink-0">
                 <Car className="w-4.5 h-4.5 sm:w-6 sm:h-6 transition-transform duration-200 group-hover:rotate-[-4deg]" />
@@ -93,7 +82,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                   {settings.brand_name}
                 </span>
                 <span className="text-[9px] sm:text-[10px] font-extrabold px-1 sm:px-1.5 py-0.5 rounded-md bg-orange-50 dark:bg-orange-950/60 text-orange-700 dark:text-orange-300 border border-orange-200 dark:border-orange-800 shrink-0">
-                  v1.6.0
+                  v1.5.4
                 </span>
               </div>
               <span className="text-[9px] sm:text-[10px] tracking-wider text-neutral-400 font-bold uppercase -mt-0.5 hidden sm:block truncate">
