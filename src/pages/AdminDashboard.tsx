@@ -73,6 +73,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const [settingsForm, setSettingsForm] = useState<PlatformSettings>(settings);
   const [savingSettings, setSavingSettings] = useState(false);
   const [isUploadingLogo, setIsUploadingLogo] = useState(false);
+  const [isUploadingDarkLogo, setIsUploadingDarkLogo] = useState(false);
+  const [uploadingFaviconKey, setUploadingFaviconKey] = useState<string | null>(null);
 
   useEffect(() => {
     if (settings) {
@@ -328,6 +330,70 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     }
   };
 
+  const handleDarkLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setIsUploadingDarkLogo(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('caption', 'Platform Dark Mode Brand Logo');
+      formData.append('file_name', file.name);
+
+      const res = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+      });
+      const data = await res.json();
+      if (res.ok && (data.file_url || data.direct_link)) {
+        const logoUrl = data.direct_link || data.file_url;
+        setSettingsForm(prev => ({ ...prev, logo_dark_url: logoUrl }));
+        showNotification('Dark Mode logo uploaded to S3! Click Save to apply.');
+      } else {
+        showNotification(data.error || 'Failed to upload dark mode logo.');
+      }
+    } catch (err) {
+      console.error('Dark logo upload error:', err);
+      showNotification('Network error uploading dark mode logo.');
+    } finally {
+      setIsUploadingDarkLogo(false);
+      if (e.target) e.target.value = '';
+    }
+  };
+
+  const handleFaviconUpload = async (
+    fieldKey: 'favicon_png_96_url' | 'favicon_svg_url' | 'favicon_ico_url' | 'apple_touch_icon_url' | 'webmanifest_url',
+    file: File,
+    label: string
+  ) => {
+    if (!file) return;
+    setUploadingFaviconKey(fieldKey);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('caption', `Platform ${label}`);
+      formData.append('file_name', file.name);
+
+      const res = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+      });
+      const data = await res.json();
+      if (res.ok && (data.file_url || data.direct_link)) {
+        const fileUrl = data.direct_link || data.file_url;
+        setSettingsForm(prev => ({ ...prev, [fieldKey]: fileUrl }));
+        showNotification(`${label} uploaded to S3! Click Save to activate on live site.`);
+      } else {
+        showNotification(data.error || `Failed to upload ${label}.`);
+      }
+    } catch (err) {
+      console.error(`Upload error for ${fieldKey}:`, err);
+      showNotification(`Network error uploading ${label}.`);
+    } finally {
+      setUploadingFaviconKey(null);
+    }
+  };
+
   // Computed KPIs
   const pendingCarsCount = cars.filter(c => c.approval_status === 'pending').length;
   const openDisputesCount = bookings.filter(b => b.dispute_status === 'open').length;
@@ -355,15 +421,16 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
   // Filtered Lists
   const filteredCars = useMemo(() => {
-    return cars.filter(c => {
+    return (cars || []).filter(c => {
+      if (!c) return false;
       if (filterApproval !== 'all' && c.approval_status !== filterApproval) return false;
       if (carSearch.trim()) {
         const q = carSearch.toLowerCase();
         return (
-          c.title.toLowerCase().includes(q) ||
-          c.lender_name.toLowerCase().includes(q) ||
+          (c.title || '').toLowerCase().includes(q) ||
+          (c.lender_name || '').toLowerCase().includes(q) ||
           (c.reg_number || '').toLowerCase().includes(q) ||
-          c.city.toLowerCase().includes(q)
+          (c.city || '').toLowerCase().includes(q)
         );
       }
       return true;
@@ -371,7 +438,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   }, [cars, filterApproval, carSearch]);
 
   const filteredUsers = useMemo(() => {
-    return allUsers.filter(u => {
+    return (allUsers || []).filter(u => {
+      if (!u) return false;
       if (userRoleFilter !== 'all' && u.role !== userRoleFilter) return false;
       if (userSearch.trim()) {
         const q = userSearch.toLowerCase();
@@ -386,7 +454,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   }, [allUsers, userRoleFilter, userSearch]);
 
   const filteredBookings = useMemo(() => {
-    return bookings.filter(b => {
+    return (bookings || []).filter(b => {
+      if (!b) return false;
       if (bookingFilter === 'disputed') return b.dispute_status === 'open';
       if (bookingFilter === 'active') return b.status === 'confirmed' || b.status === 'active';
       if (bookingFilter === 'cancelled') return b.status === 'cancelled';
@@ -489,7 +558,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             <span className="truncate max-w-[90px] xs:max-w-[130px] sm:max-w-none">{settings.brand_name}</span>
           </Link>
           <span className="text-[10px] font-extrabold px-1 sm:px-1.5 py-0.5 rounded-md bg-orange-950/60 text-orange-400 border border-orange-800 shrink-0">
-            v1.3.7
+            v1.5.7
           </span>
           <span className="text-neutral-600 hidden sm:inline">|</span>
           <div className="hidden lg:flex items-center space-x-2">
@@ -1692,64 +1761,264 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         />
                       </div>
 
-                      {/* Logo Configuration */}
-                      <div className="space-y-3 pt-2">
-                        <label className="block text-[11px] font-bold text-neutral-700 dark:text-neutral-300 uppercase tracking-wider">
-                          Custom Logo Image
+                      {/* Logo Configuration: Light & Dark Mode */}
+                      <div className="space-y-4 pt-2">
+                        <label className="block text-xs font-black text-neutral-900 dark:text-white uppercase tracking-wider">
+                          Brand Logos (Light &amp; Dark Theme Support)
                         </label>
 
-                        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 p-4 rounded-2xl bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800">
-                          <div className="w-24 h-16 rounded-xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 flex items-center justify-center p-2 shrink-0 overflow-hidden">
-                            {settingsForm.logo_url ? (
-                              <img
-                                src={settingsForm.logo_url}
-                                alt="Logo Preview"
-                                className="max-h-full max-w-full object-contain"
-                              />
-                            ) : (
-                              <div className="flex flex-col items-center text-neutral-400">
-                                <CarIcon className="w-6 h-6 text-orange-600 mb-0.5" />
-                                <span className="text-[9px] font-bold">Default Icon</span>
-                              </div>
-                            )}
-                          </div>
-
-                          <div className="flex-1 space-y-2 w-full">
-                            <input
-                              type="url"
-                              value={settingsForm.logo_url}
-                              onChange={e => setSettingsForm({ ...settingsForm, logo_url: e.target.value })}
-                              placeholder="Direct Image URL (https://.../logo.png)"
-                              className="w-full px-3 py-2 rounded-xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 text-xs font-mono focus:border-orange-500 focus:outline-none"
-                            />
-
-                            <div className="flex flex-wrap items-center gap-2">
-                              <label className="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-neutral-900 dark:bg-neutral-800 hover:bg-neutral-800 text-white text-xs font-bold cursor-pointer transition-colors">
-                                <Upload className="w-3.5 h-3.5 text-orange-400" />
-                                <span>{isUploadingLogo ? 'Uploading...' : 'Upload Logo to S3'}</span>
-                                <input
-                                  type="file"
-                                  accept="image/*"
-                                  onChange={handleLogoUpload}
-                                  disabled={isUploadingLogo}
-                                  className="hidden"
+                        {/* Light Mode Logo */}
+                        <div className="space-y-1.5">
+                          <span className="text-[11px] font-bold text-neutral-700 dark:text-neutral-300 block">
+                            Light Mode Logo (Displayed on White/Light Backgrounds)
+                          </span>
+                          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 p-3.5 rounded-2xl bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800">
+                            <div className="w-24 h-14 rounded-xl border border-neutral-200 dark:border-neutral-700 bg-white flex items-center justify-center p-2 shrink-0 overflow-hidden">
+                              {settingsForm.logo_url ? (
+                                <img
+                                  src={settingsForm.logo_url}
+                                  alt="Light Logo Preview"
+                                  className="max-h-full max-w-full object-contain"
                                 />
-                              </label>
-
-                              {settingsForm.logo_url && (
-                                <button
-                                  type="button"
-                                  onClick={() => setSettingsForm({ ...settingsForm, logo_url: '' })}
-                                  className="px-3 py-1.5 rounded-xl border border-neutral-200 dark:border-neutral-700 hover:bg-neutral-100 dark:hover:bg-neutral-800 text-xs font-bold text-neutral-600 dark:text-neutral-300 cursor-pointer"
-                                >
-                                  Reset to Default Icon
-                                </button>
+                              ) : (
+                                <div className="flex flex-col items-center text-neutral-400">
+                                  <CarIcon className="w-5 h-5 text-orange-600 mb-0.5" />
+                                  <span className="text-[9px] font-bold">Default Light</span>
+                                </div>
                               )}
+                            </div>
+
+                            <div className="flex-1 space-y-2 w-full">
+                              <input
+                                type="url"
+                                value={settingsForm.logo_url}
+                                onChange={e => setSettingsForm({ ...settingsForm, logo_url: e.target.value })}
+                                placeholder="Light Logo URL (https://.../logo-light.png)"
+                                className="w-full px-3 py-1.5 rounded-xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 text-xs font-mono focus:border-orange-500 focus:outline-none"
+                              />
+
+                              <div className="flex flex-wrap items-center gap-2">
+                                <label className="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-neutral-900 dark:bg-neutral-800 hover:bg-neutral-800 text-white text-xs font-bold cursor-pointer transition-colors">
+                                  <Upload className="w-3.5 h-3.5 text-orange-400" />
+                                  <span>{isUploadingLogo ? 'Uploading to S3...' : 'Upload Light Logo'}</span>
+                                  <input
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={handleLogoUpload}
+                                    disabled={isUploadingLogo}
+                                    className="hidden"
+                                  />
+                                </label>
+
+                                {settingsForm.logo_url && (
+                                  <button
+                                    type="button"
+                                    onClick={() => setSettingsForm({ ...settingsForm, logo_url: '' })}
+                                    className="px-2.5 py-1.5 rounded-xl border border-neutral-200 dark:border-neutral-700 hover:bg-neutral-100 dark:hover:bg-neutral-800 text-xs font-bold text-neutral-500 cursor-pointer"
+                                  >
+                                    Reset Light Logo
+                                  </button>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Dark Mode Logo */}
+                        <div className="space-y-1.5">
+                          <span className="text-[11px] font-bold text-neutral-700 dark:text-neutral-300 block">
+                            Dark Mode Logo (Displayed on Dark/Night Backgrounds)
+                          </span>
+                          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 p-3.5 rounded-2xl bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800">
+                            <div className="w-24 h-14 rounded-xl border border-neutral-700 bg-neutral-900 flex items-center justify-center p-2 shrink-0 overflow-hidden">
+                              {settingsForm.logo_dark_url ? (
+                                <img
+                                  src={settingsForm.logo_dark_url}
+                                  alt="Dark Logo Preview"
+                                  className="max-h-full max-w-full object-contain"
+                                />
+                              ) : settingsForm.logo_url ? (
+                                <img
+                                  src={settingsForm.logo_url}
+                                  alt="Fallback Logo"
+                                  className="max-h-full max-w-full object-contain opacity-70"
+                                />
+                              ) : (
+                                <div className="flex flex-col items-center text-neutral-400">
+                                  <CarIcon className="w-5 h-5 text-orange-500 mb-0.5" />
+                                  <span className="text-[9px] font-bold">Default Dark</span>
+                                </div>
+                              )}
+                            </div>
+
+                            <div className="flex-1 space-y-2 w-full">
+                              <input
+                                type="url"
+                                value={settingsForm.logo_dark_url || ''}
+                                onChange={e => setSettingsForm({ ...settingsForm, logo_dark_url: e.target.value })}
+                                placeholder="Dark Logo URL (https://.../logo-dark.png)"
+                                className="w-full px-3 py-1.5 rounded-xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 text-xs font-mono focus:border-orange-500 focus:outline-none"
+                              />
+
+                              <div className="flex flex-wrap items-center gap-2">
+                                <label className="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-neutral-900 dark:bg-neutral-800 hover:bg-neutral-800 text-white text-xs font-bold cursor-pointer transition-colors">
+                                  <Upload className="w-3.5 h-3.5 text-orange-400" />
+                                  <span>{isUploadingDarkLogo ? 'Uploading to S3...' : 'Upload Dark Logo'}</span>
+                                  <input
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={handleDarkLogoUpload}
+                                    disabled={isUploadingDarkLogo}
+                                    className="hidden"
+                                  />
+                                </label>
+
+                                {settingsForm.logo_dark_url && (
+                                  <button
+                                    type="button"
+                                    onClick={() => setSettingsForm({ ...settingsForm, logo_dark_url: '' })}
+                                    className="px-2.5 py-1.5 rounded-xl border border-neutral-200 dark:border-neutral-700 hover:bg-neutral-100 dark:hover:bg-neutral-800 text-xs font-bold text-neutral-500 cursor-pointer"
+                                  >
+                                    Reset Dark Logo
+                                  </button>
+                                )}
+                              </div>
                             </div>
                           </div>
                         </div>
                       </div>
                     </div>
+
+                      {/* Favicons & App Manifest Assets Section */}
+                      <div className="space-y-4 pt-4 border-t border-neutral-100 dark:border-neutral-800">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <label className="block text-xs font-black text-neutral-900 dark:text-white uppercase tracking-wider">
+                              Favicons, Touch Icons &amp; Web Manifest (S3 Backed)
+                            </label>
+                            <p className="text-[11px] text-neutral-500 dark:text-neutral-400">
+                              Upload each icon asset. Every file is uploaded to S3, saved to MySQL, and live-reflected in browser head tags.
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="space-y-3">
+                          {[
+                            {
+                              key: 'favicon_png_96_url' as const,
+                              label: 'PNG Favicon (96x96)',
+                              tag: '<link rel="icon" type="image/png" href="..." sizes="96x96" />',
+                              accept: 'image/png,image/*',
+                              defaultUrl: '/favicon-96x96.png',
+                              desc: 'Standard 96x96 PNG icon for modern browser tabs.',
+                            },
+                            {
+                              key: 'favicon_svg_url' as const,
+                              label: 'Vector SVG Favicon',
+                              tag: '<link rel="icon" type="image/svg+xml" href="..." />',
+                              accept: 'image/svg+xml,.svg,image/*',
+                              defaultUrl: '/favicon.svg',
+                              desc: 'Scalable vector icon for high-DPI crisp browser tab display.',
+                            },
+                            {
+                              key: 'favicon_ico_url' as const,
+                              label: 'Shortcut ICO Favicon',
+                              tag: '<link rel="shortcut icon" href="..." />',
+                              accept: '.ico,image/x-icon,image/vnd.microsoft.icon,image/*',
+                              defaultUrl: '/favicon.ico',
+                              desc: 'Legacy ICO icon for desktop shortcuts and older browsers.',
+                            },
+                            {
+                              key: 'apple_touch_icon_url' as const,
+                              label: 'Apple Touch Icon (180x180)',
+                              tag: '<link rel="apple-touch-icon" sizes="180x180" href="..." />',
+                              accept: 'image/png,image/*',
+                              defaultUrl: '/apple-touch-icon.png',
+                              desc: '180x180 PNG icon used when adding site to iOS Home Screen.',
+                            },
+                            {
+                              key: 'webmanifest_url' as const,
+                              label: 'Web App Manifest (site.webmanifest)',
+                              tag: '<link rel="manifest" href="..." />',
+                              accept: '.webmanifest,.json,application/json,text/plain,*/*',
+                              defaultUrl: '/site.webmanifest',
+                              desc: 'JSON Web Manifest file for PWA installability and Android app metadata.',
+                            },
+                          ].map((item) => {
+                            const currentValue = settingsForm[item.key] || item.defaultUrl;
+                            const isUploading = uploadingFaviconKey === item.key;
+                            const isS3Url = currentValue.startsWith('http://') || currentValue.startsWith('https://');
+
+                            return (
+                              <div
+                                key={item.key}
+                                className="p-3.5 rounded-2xl bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 space-y-2"
+                              >
+                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                                  <div>
+                                    <span className="font-bold text-xs text-neutral-900 dark:text-white block">
+                                      {item.label}
+                                    </span>
+                                    <span className="text-[10px] font-mono text-orange-600 dark:text-orange-400 block">
+                                      {item.tag}
+                                    </span>
+                                  </div>
+                                  <span
+                                    className={`text-[10px] font-bold px-2 py-0.5 rounded-full border w-fit ${
+                                      isS3Url
+                                        ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800'
+                                        : 'bg-neutral-200 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400 border-neutral-300 dark:border-neutral-700'
+                                    }`}
+                                  >
+                                    {isS3Url ? '✓ S3 Cloud Backed' : 'Default Asset'}
+                                  </span>
+                                </div>
+
+                                <p className="text-[11px] text-neutral-500 dark:text-neutral-400">{item.desc}</p>
+
+                                <div className="flex flex-col sm:flex-row items-center gap-2">
+                                  <input
+                                    type="text"
+                                    value={currentValue}
+                                    onChange={(e) => setSettingsForm({ ...settingsForm, [item.key]: e.target.value })}
+                                    placeholder={item.defaultUrl}
+                                    className="flex-1 w-full px-3 py-1.5 rounded-xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 text-xs font-mono focus:border-orange-500 focus:outline-none"
+                                  />
+
+                                  <div className="flex items-center gap-2 w-full sm:w-auto shrink-0">
+                                    <label className="inline-flex items-center justify-center space-x-1.5 px-3 py-1.5 rounded-xl bg-neutral-900 dark:bg-neutral-800 hover:bg-neutral-800 text-white text-xs font-bold cursor-pointer transition-colors w-full sm:w-auto text-center">
+                                      <Upload className="w-3.5 h-3.5 text-orange-400" />
+                                      <span>{isUploading ? 'Uploading to S3...' : 'Upload File'}</span>
+                                      <input
+                                        type="file"
+                                        accept={item.accept}
+                                        onChange={(e) => {
+                                          const f = e.target.files?.[0];
+                                          if (f) handleFaviconUpload(item.key, f, item.label);
+                                          e.target.value = '';
+                                        }}
+                                        disabled={isUploading}
+                                        className="hidden"
+                                      />
+                                    </label>
+
+                                    {settingsForm[item.key] && (
+                                      <button
+                                        type="button"
+                                        onClick={() => setSettingsForm({ ...settingsForm, [item.key]: '' })}
+                                        className="px-2.5 py-1.5 rounded-xl border border-neutral-200 dark:border-neutral-700 hover:bg-neutral-100 dark:hover:bg-neutral-800 text-xs font-bold text-neutral-500 cursor-pointer"
+                                        title="Reset to default asset path"
+                                      >
+                                        Reset
+                                      </button>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
 
                     {/* Social Media Links */}
                     <div className="p-5 sm:p-6 rounded-3xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 space-y-4">
@@ -1893,42 +2162,90 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                       </div>
                     </div>
 
-                    {/* Live Preview Card */}
+                    {/* Live Preview Card (Light & Dark Theme Preview) */}
                     <div className="p-5 rounded-3xl border border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-950 space-y-3">
                       <span className="text-[11px] font-black uppercase text-neutral-400 tracking-wider block">
-                        Live Brand Header Preview
+                        Live Brand Header Preview (Dual Mode)
                       </span>
-                      <div className="p-3.5 rounded-2xl bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 flex items-center justify-between">
-                        <div className="flex items-center space-x-2.5">
-                          {settingsForm.logo_url ? (
-                            <img
-                              src={settingsForm.logo_url}
-                              alt="Brand Logo"
-                              className="h-8 max-w-[120px] object-contain rounded"
-                            />
-                          ) : (
-                            <div className="w-8 h-8 rounded-xl bg-orange-600 text-white flex items-center justify-center font-bold">
-                              <CarIcon className="w-4 h-4" />
-                            </div>
-                          )}
-                          <div>
-                            <div className="flex items-center space-x-1.5">
-                              <span className="font-extrabold text-sm text-neutral-900 dark:text-white">
-                                {settingsForm.brand_name || 'Brand Name'}
-                              </span>
-                              <span className="text-[9px] px-1 py-0.2 rounded bg-orange-100 text-orange-700 font-bold">
-                                v1.3.5
-                              </span>
-                            </div>
-                            <span className="text-[10px] text-neutral-400 block -mt-0.5">
-                              {settingsForm.brand_tagline || 'Self-Drive Fleet'}
-                            </span>
-                          </div>
-                        </div>
 
-                        <span className="text-[11px] font-bold text-orange-600 font-mono">
-                          {settingsForm.domain_name}
-                        </span>
+                      {/* Light Theme Preview */}
+                      <div className="space-y-1">
+                        <span className="text-[10px] font-bold text-neutral-500 uppercase block">Light Theme Preview</span>
+                        <div className="p-3 rounded-2xl bg-white border border-neutral-200 text-neutral-900 flex items-center justify-between shadow-2xs">
+                          <div className="flex items-center space-x-2.5">
+                            {settingsForm.logo_url ? (
+                              <img
+                                src={settingsForm.logo_url}
+                                alt="Light Logo"
+                                className="h-7 max-w-[120px] object-contain rounded"
+                              />
+                            ) : (
+                              <div className="w-7 h-7 rounded-lg bg-orange-600 text-white flex items-center justify-center font-bold">
+                                <CarIcon className="w-3.5 h-3.5" />
+                              </div>
+                            )}
+                            <div>
+                              <div className="flex items-center space-x-1.5">
+                                <span className="font-extrabold text-xs text-neutral-900">
+                                  {settingsForm.brand_name || 'Brand Name'}
+                                </span>
+                                <span className="text-[8px] px-1 py-0.2 rounded bg-orange-100 text-orange-700 font-bold">
+                                  v1.5.6
+                                </span>
+                              </div>
+                              <span className="text-[9px] text-neutral-400 block -mt-0.5">
+                                {settingsForm.brand_tagline || 'Self-Drive Fleet'}
+                              </span>
+                            </div>
+                          </div>
+
+                          <span className="text-[10px] font-bold text-orange-600 font-mono">
+                            {settingsForm.domain_name}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Dark Theme Preview */}
+                      <div className="space-y-1">
+                        <span className="text-[10px] font-bold text-neutral-400 uppercase block">Dark Theme Preview</span>
+                        <div className="p-3 rounded-2xl bg-neutral-900 border border-neutral-800 text-white flex items-center justify-between shadow-2xs">
+                          <div className="flex items-center space-x-2.5">
+                            {settingsForm.logo_dark_url ? (
+                              <img
+                                src={settingsForm.logo_dark_url}
+                                alt="Dark Logo"
+                                className="h-7 max-w-[120px] object-contain rounded"
+                              />
+                            ) : settingsForm.logo_url ? (
+                              <img
+                                src={settingsForm.logo_url}
+                                alt="Light Logo Fallback"
+                                className="h-7 max-w-[120px] object-contain rounded opacity-80"
+                              />
+                            ) : (
+                              <div className="w-7 h-7 rounded-lg bg-orange-600 text-white flex items-center justify-center font-bold">
+                                <CarIcon className="w-3.5 h-3.5" />
+                              </div>
+                            )}
+                            <div>
+                              <div className="flex items-center space-x-1.5">
+                                <span className="font-extrabold text-xs text-white">
+                                  {settingsForm.brand_name || 'Brand Name'}
+                                </span>
+                                <span className="text-[8px] px-1 py-0.2 rounded bg-orange-950/80 text-orange-300 border border-orange-800 font-bold">
+                                  v1.5.6
+                                </span>
+                              </div>
+                              <span className="text-[9px] text-neutral-400 block -mt-0.5">
+                                {settingsForm.brand_tagline || 'Self-Drive Fleet'}
+                              </span>
+                            </div>
+                          </div>
+
+                          <span className="text-[10px] font-bold text-orange-400 font-mono">
+                            {settingsForm.domain_name}
+                          </span>
+                        </div>
                       </div>
                     </div>
                   </div>
