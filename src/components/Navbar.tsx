@@ -82,7 +82,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                   {settings.brand_name}
                 </span>
                 <span className="text-[9px] sm:text-[10px] font-extrabold px-1 sm:px-1.5 py-0.5 rounded-md bg-orange-50 dark:bg-orange-950/60 text-orange-700 dark:text-orange-300 border border-orange-200 dark:border-orange-800 shrink-0">
-                  v1.5.5
+                  v1.5.4
                 </span>
               </div>
               <span className="text-[9px] sm:text-[10px] tracking-wider text-neutral-400 font-bold uppercase -mt-0.5 hidden sm:block truncate">

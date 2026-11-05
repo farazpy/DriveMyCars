@@ -905,30 +905,6 @@ async function injectMetaTags(html: string, req: express.Request): Promise<strin
   const urlPath = req.path;
   const baseUrl = 'https://charvirental.com';
 
-  // Dynamically inject custom uploaded favicons, icons and manifest
-  try {
-    const settings = await getPlatformSettings();
-    if (settings) {
-      if (settings.favicon_png_96_url) {
-        html = html.replace(/<link rel="icon" type="image\/png" href=".*?" sizes="96x96" \/>/i, `<link rel="icon" type="image/png" href="${settings.favicon_png_96_url}" sizes="96x96" />`);
-      }
-      if (settings.favicon_svg_url) {
-        html = html.replace(/<link rel="icon" type="image\/svg\+xml" href=".*?" \/>/i, `<link rel="icon" type="image/svg+xml" href="${settings.favicon_svg_url}" />`);
-      }
-      if (settings.favicon_ico_url) {
-        html = html.replace(/<link rel="shortcut icon" href=".*?" \/>/i, `<link rel="shortcut icon" href="${settings.favicon_ico_url}" />`);
-      }
-      if (settings.apple_touch_icon_url) {
-        html = html.replace(/<link rel="apple-touch-icon" sizes="180x180" href=".*?" \/>/i, `<link rel="apple-touch-icon" sizes="180x180" href="${settings.apple_touch_icon_url}" />`);
-      }
-      if (settings.webmanifest_url) {
-        html = html.replace(/<link rel="manifest" href=".*?" \/>/i, `<link rel="manifest" href="${settings.webmanifest_url}" />`);
-      }
-    }
-  } catch (e) {
-    console.error('Error injecting favicon settings:', e);
-  }
-
   if (urlPath.startsWith('/car/') || urlPath.startsWith('/cars/')) {
     const carId = urlPath.split('/')[2];
     if (carId) {
