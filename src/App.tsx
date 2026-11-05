@@ -1072,16 +1072,24 @@ function AppContent() {
 
 const GOOGLE_MAPS_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '';
 
+const SafeAPIProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const mapsKey = GOOGLE_MAPS_KEY.trim();
+  if (!mapsKey) {
+    return <>{children}</>;
+  }
+  return <APIProvider apiKey={mapsKey}>{children}</APIProvider>;
+};
+
 export default function App() {
   return (
     <ErrorBoundary>
       <PlatformSettingsProvider>
         <ThemeProvider>
-          <APIProvider apiKey={GOOGLE_MAPS_KEY}>
+          <SafeAPIProvider>
             <RouterProvider>
               <AppContent />
             </RouterProvider>
-          </APIProvider>
+          </SafeAPIProvider>
         </ThemeProvider>
       </PlatformSettingsProvider>
     </ErrorBoundary>

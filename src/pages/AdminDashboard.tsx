@@ -558,7 +558,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             <span className="truncate max-w-[90px] xs:max-w-[130px] sm:max-w-none">{settings.brand_name}</span>
           </Link>
           <span className="text-[10px] font-extrabold px-1 sm:px-1.5 py-0.5 rounded-md bg-orange-950/60 text-orange-400 border border-orange-800 shrink-0">
-            v1.5.9
+            v1.6.0
           </span>
           <span className="text-neutral-600 hidden sm:inline">|</span>
           <div className="hidden lg:flex items-center space-x-2">
