@@ -25,6 +25,14 @@ interface GooglePlaceAutocompleteInputProps {
   helperText?: string;
 }
 
+const useSafeMapsLibrary = (name: 'places') => {
+  try {
+    return useMapsLibrary(name);
+  } catch {
+    return null;
+  }
+};
+
 export const GooglePlaceAutocompleteInput: React.FC<GooglePlaceAutocompleteInputProps> = ({
   value,
   onChange,
@@ -38,7 +46,7 @@ export const GooglePlaceAutocompleteInput: React.FC<GooglePlaceAutocompleteInput
   types,
   helperText,
 }) => {
-  const placesLib = useMapsLibrary('places');
+  const placesLib = useSafeMapsLibrary('places');
   const sessionTokenRef = useRef<any>(null);
 
   const [inputVal, setInputVal] = useState(value);
