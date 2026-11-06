@@ -23,13 +23,6 @@ export interface PlatformSettings {
   default_extra_km_rate: number;
   auto_approve_vehicles: boolean;
   auto_approve_hosts: boolean;
-  available_cities?: string[];
-  logo_dark_url?: string;
-  favicon_png_96_url?: string;
-  favicon_svg_url?: string;
-  favicon_ico_url?: string;
-  apple_touch_icon_url?: string;
-  webmanifest_url?: string;
   updated_at?: string;
 }
 
@@ -56,7 +49,6 @@ export const DEFAULT_PLATFORM_SETTINGS: PlatformSettings = {
   default_extra_km_rate: 12,
   auto_approve_vehicles: false,
   auto_approve_hosts: false,
-  available_cities: ['Pune', 'Mumbai', 'Bangalore', 'Delhi NCR', 'Goa', 'Hyderabad'],
 };
 
 interface PlatformSettingsContextType {

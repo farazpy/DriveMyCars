@@ -27,7 +27,6 @@ import { Link, useRouter } from '../router.tsx';
 import { IndianVehiclePlateInput } from '../components/IndianVehiclePlateInput.tsx';
 import { CityHubRadiusMap } from '../components/CityHubRadiusMap.tsx';
 import { uploadFileToHTKS3 } from '../utils/s3Upload.ts';
-import { usePlatformSettings } from '../context/PlatformSettingsContext.tsx';
 
 interface ListCarPageProps {
   user: UserProfile | null;
@@ -64,9 +63,6 @@ export const ListCarPage: React.FC<ListCarPageProps> = ({
   onSignInRequired,
   onCarCreated,
 }) => {
-  const { settings } = usePlatformSettings();
-  const availableCities = settings.available_cities || ['Pune', 'Mumbai', 'Bangalore', 'Delhi NCR', 'Goa', 'Hyderabad'];
-
   const { navigate } = useRouter();
 
   // Basic Details
@@ -505,7 +501,6 @@ export const ListCarPage: React.FC<ListCarPageProps> = ({
                     onCoordsChange={setHubCoords}
                     pickupAddress={pickupAddress}
                     onPickupAddressChange={setPickupAddress}
-                    availableCities={availableCities}
                   />
                 </div>
               </div>

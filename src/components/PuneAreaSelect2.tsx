@@ -10,7 +10,6 @@ interface PuneAreaSelect2Props {
   gpsMessage?: string | null;
   placeholder?: string;
   className?: string;
-  cityName?: string;
 }
 
 const ZONES = ['All', 'Popular', 'IT Hubs & West', 'East Pune & IT', 'Central Pune', 'PCMC', 'South Pune'] as const;
@@ -21,9 +20,8 @@ export const PuneAreaSelect2: React.FC<PuneAreaSelect2Props> = ({
   onDetectGps,
   gpsLocating = false,
   gpsMessage = null,
-  placeholder = 'Select or search area...',
+  placeholder = 'Select or search Pune area (e.g. Wakad, Baner)...',
   className = '',
-  cityName = 'Pune',
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -127,7 +125,7 @@ export const PuneAreaSelect2: React.FC<PuneAreaSelect2Props> = ({
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-1.5 text-xs font-bold text-neutral-900 dark:text-white">
                 <Building2 className="w-4 h-4 text-orange-600" />
-                <span>Select {cityName} Pickup Area {cityName === 'Pune' ? `(${ALL_PUNE_AREAS.length} Areas)` : ''}</span>
+                <span>Select Pune Pickup Area ({ALL_PUNE_AREAS.length} Areas)</span>
               </div>
               {onDetectGps && (
                 <button

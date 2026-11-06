@@ -31,10 +31,9 @@ import {
   Mail,
   Upload,
   Image as ImageIcon,
-  Save,
-  Database
+  Save
 } from 'lucide-react';
-import { Car, Booking, UserProfile, DbStatusInfo } from '../types.ts';
+import { Car, Booking, UserProfile } from '../types.ts';
 import { Link, useRouter } from '../router.tsx';
 import { EditCarModal } from '../components/EditCarModal.tsx';
 import { InvoiceModal } from '../components/InvoiceModal.tsx';
@@ -46,8 +45,6 @@ interface AdminDashboardProps {
   onSignOut: () => void;
   onSignInRequired?: () => void;
   onOpenListCarModal?: () => void;
-  dbStatus?: DbStatusInfo | null;
-  onOpenDatabaseModal?: () => void;
 }
 
 const AUTHORIZED_ADMIN_EMAILS = [
@@ -61,8 +58,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   onSignOut,
   onSignInRequired,
   onOpenListCarModal,
-  dbStatus,
-  onOpenDatabaseModal,
 }) => {
   const { navigate } = useRouter();
   const { settings, updateSettings } = usePlatformSettings();
@@ -79,7 +74,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const [savingSettings, setSavingSettings] = useState(false);
   const [isUploadingLogo, setIsUploadingLogo] = useState(false);
   const [isUploadingFavicon, setIsUploadingFavicon] = useState(false);
-  const [newCityInput, setNewCityInput] = useState('');
 
   useEffect(() => {
     if (settings) {
@@ -529,19 +523,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           <span className="text-[10px] font-extrabold px-1 sm:px-1.5 py-0.5 rounded-md bg-orange-950/60 text-orange-400 border border-orange-800 shrink-0">
             v1.3.7
           </span>
-          {dbStatus && (
-            <button
-              onClick={onOpenDatabaseModal}
-              className={`p-1 rounded border transition-all ${
-                dbStatus.connected
-                  ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
-                  : 'bg-red-500/10 text-red-400 border-red-500/20 animate-pulse'
-              }`}
-              title={dbStatus.connected ? 'Database Connected' : 'Database Connection Failed'}
-            >
-              <Database className="w-3.5 h-3.5" />
-            </button>
-          )}
           <span className="text-neutral-600 hidden sm:inline">|</span>
           <div className="hidden lg:flex items-center space-x-2">
             <span className="text-xs font-bold text-neutral-200">System Governance Portal</span>
@@ -2247,75 +2228,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         type="checkbox"
                         checked={Boolean(settingsForm.auto_approve_hosts)}
                         onChange={e => setSettingsForm({ ...settingsForm, auto_approve_hosts: e.target.checked })}
+                        className="w-5 h-5 accent-orange-600 rounded cursor-pointer mt-0.5"
                       />
-                    </div>
-                  </div>
-
-                  {/* Operational Cities Management */}
-                  <div className="p-4 sm:p-6 rounded-2xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 space-y-4">
-                    <div className="flex items-center justify-between">
-                      <div className="space-y-1">
-                        <h3 className="font-black text-sm text-neutral-900 dark:text-white flex items-center gap-2">
-                          <Globe className="w-4 h-4 text-orange-600" />
-                          Operational Cities Management
-                        </h3>
-                        <p className="text-[11px] text-neutral-500 dark:text-neutral-400">
-                          Define which cities are available for car listings and searches across the platform.
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="flex flex-wrap gap-2 pt-2">
-                      {(settingsForm.available_cities || []).map((city, idx) => (
-                        <div
-                          key={`${city}-${idx}`}
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-orange-50 dark:bg-orange-950/40 text-orange-700 dark:text-orange-300 border border-orange-200 dark:border-orange-800 text-[11px] font-bold"
-                        >
-                          <span>{city}</span>
-                          <button
-                            onClick={() => {
-                              const updated = (settingsForm.available_cities || []).filter(c => c !== city);
-                              setSettingsForm({ ...settingsForm, available_cities: updated });
-                            }}
-                            className="hover:text-red-600 transition-colors"
-                          >
-                            <XCircle className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-
-                    <div className="flex gap-2 max-w-md">
-                      <input
-                        type="text"
-                        placeholder="Add city (e.g. Pune, Mumbai...)"
-                        value={newCityInput}
-                        onChange={(e) => setNewCityInput(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') {
-                            e.preventDefault();
-                            if (newCityInput.trim()) {
-                              const updated = [...(settingsForm.available_cities || []), newCityInput.trim()];
-                              setSettingsForm({ ...settingsForm, available_cities: updated });
-                              setNewCityInput('');
-                            }
-                          }
-                        }}
-                        className="flex-1 px-4 py-2 rounded-xl text-xs bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 focus:border-orange-500 outline-none transition-all"
-                      />
-                      <button
-                        onClick={() => {
-                          if (newCityInput.trim()) {
-                            const updated = [...(settingsForm.available_cities || []), newCityInput.trim()];
-                            setSettingsForm({ ...settingsForm, available_cities: updated });
-                            setNewCityInput('');
-                          }
-                        }}
-                        className="px-4 py-2 rounded-xl text-xs font-bold bg-orange-600 text-white hover:bg-orange-700 transition-colors flex items-center gap-2"
-                      >
-                        <PlusCircle className="w-4 h-4" />
-                        <span>Add City</span>
-                      </button>
                     </div>
                   </div>
 

@@ -159,17 +159,15 @@ export const googleSignIn = async (): Promise<{ user: User; accessToken: string 
   try {
     isSigningIn = true;
 
-    // Detect mobile device or iframe environment
+    // Detect mobile device
     const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth < 768;
-    const isIframe = window.self !== window.top;
 
-    if (isMobile || isIframe) {
-      // Open in same page using redirect on mobile or iframes
-      console.log('[Firebase] Using signInWithRedirect for mobile/iframe environment');
+    if (isMobile) {
+      // Open in same page using redirect on mobile
       await signInWithRedirect(auth, provider);
       return null; // The redirect will take over the page
     } else {
-      // Use popup on desktop (only if not in iframe)
+      // Use popup on desktop
       const result = await signInWithPopup(auth, provider);
       const credential = GoogleAuthProvider.credentialFromResult(result);
       const token = credential?.accessToken || await result.user.getIdToken();
@@ -194,15 +192,7 @@ export const googleSignIn = async (): Promise<{ user: User; accessToken: string 
       return { user: result.user, accessToken: token };
     }
   } catch (error: any) {
-    console.error('Google Sign In Error Details:', {
-      code: error.code,
-      message: error.message,
-      customData: error.customData,
-      email: error.email
-    });
-    if (error.code === 'auth/unauthorized-domain') {
-      console.error('[Firebase] This domain is not authorized in Firebase Console -> Auth -> Settings -> Authorized Domains.');
-    }
+    console.error('Google Sign In error:', error);
     throw error;
   } finally {
     isSigningIn = false;

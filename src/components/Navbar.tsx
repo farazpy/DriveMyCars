@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import {
   Car,
   User as UserIcon,
-  Database,
   LogOut,
   Menu,
   X,
@@ -18,7 +17,7 @@ import {
   MapPin,
   Check
 } from 'lucide-react';
-import { UserProfile, UserRole, DbStatusInfo } from '../types.ts';
+import { UserProfile, UserRole } from '../types.ts';
 import { Link, useRouter } from '../router.tsx';
 import { useTheme } from '../context/ThemeContext.tsx';
 import { usePlatformSettings } from '../context/PlatformSettingsContext.tsx';
@@ -43,8 +42,6 @@ interface NavbarProps {
   onOpenTripsModal: () => void;
   onOpenLenderPortal: () => void;
   onOpenListCarModal: () => void;
-  dbStatus?: DbStatusInfo | null;
-  onOpenDatabaseModal?: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -53,8 +50,6 @@ export const Navbar: React.FC<NavbarProps> = ({
   onSelectCity,
   onSignInClick,
   onSignOutClick,
-  dbStatus,
-  onOpenDatabaseModal,
 }) => {
   const { path } = useRouter();
   const { theme, toggleTheme } = useTheme();
@@ -87,23 +82,8 @@ export const Navbar: React.FC<NavbarProps> = ({
                   {settings.brand_name}
                 </span>
                 <span className="text-[9px] sm:text-[10px] font-extrabold px-1 sm:px-1.5 py-0.5 rounded-md bg-orange-50 dark:bg-orange-950/60 text-orange-700 dark:text-orange-300 border border-orange-200 dark:border-orange-800 shrink-0">
-                  v1.5.8
+                  v1.5.5
                 </span>
-                <button
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    onOpenDatabaseModal?.();
-                  }}
-                  className={`flex items-center justify-center p-1 rounded-md border transition-all ${
-                    dbStatus?.connected
-                      ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/60'
-                      : 'bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-400 border-red-200 dark:border-red-800/60 animate-pulse'
-                  }`}
-                  title={dbStatus?.connected ? 'MySQL Database Connected' : 'Database Connection Failed - Click for Details'}
-                >
-                  <Database className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-                </button>
               </div>
               <span className="text-[9px] sm:text-[10px] tracking-wider text-neutral-400 font-bold uppercase -mt-0.5 hidden sm:block truncate">
                 {settings.brand_tagline || 'Self-Drive Fleet · India'}

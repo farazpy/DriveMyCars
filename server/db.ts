@@ -45,13 +45,6 @@ export interface PlatformSettings {
   default_extra_km_rate: number;
   auto_approve_vehicles: boolean;
   auto_approve_hosts: boolean;
-  available_cities?: string[]; // JSON string in DB, string[] in JS
-  logo_dark_url?: string;
-  favicon_png_96_url?: string;
-  favicon_svg_url?: string;
-  favicon_ico_url?: string;
-  apple_touch_icon_url?: string;
-  webmanifest_url?: string;
   updated_at?: string;
 }
 
@@ -84,12 +77,22 @@ let memSettings: PlatformSettings = {
   default_extra_km_rate: 12,
   auto_approve_vehicles: false,
   auto_approve_hosts: false,
-  available_cities: ['Pune', 'Mumbai', 'Bangalore', 'Delhi NCR', 'Goa', 'Hyderabad'],
 };
 
 export async function initDatabase() {
   console.log(`[DB] Attempting MySQL connection to ${DB_USER}@${DB_HOST}:${DB_PORT}/${DB_NAME}...`);
   try {
+    const adminConn = await mysql.createConnection({
+      host: DB_HOST,
+      port: DB_PORT,
+      user: DB_USER,
+      password: DB_PASSWORD,
+      connectTimeout: 4000,
+    });
+
+    await adminConn.query(`CREATE DATABASE IF NOT EXISTS \`${DB_NAME}\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;`);
+    await adminConn.end();
+
     pool = mysql.createPool({
       host: DB_HOST,
       port: DB_PORT,
@@ -99,7 +102,7 @@ export async function initDatabase() {
       waitForConnections: true,
       connectionLimit: 10,
       queueLimit: 0,
-      connectTimeout: 8000,
+      connectTimeout: 4000,
     });
 
     const testConn = await pool.getConnection();
@@ -306,21 +309,24 @@ export async function initDatabase() {
         social_instagram VARCHAR(255) DEFAULT 'https://instagram.com/charvirental',
         social_twitter VARCHAR(255) DEFAULT 'https://twitter.com/charvirental',
         social_facebook VARCHAR(255) DEFAULT 'https://facebook.com/charvirental',
-        available_cities JSON,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
     `);
 
+    await testConn.query(`
+      INSERT IGNORE INTO platform_settings (id, brand_name, brand_tagline, logo_url, contact_email, contact_phone, contact_address, domain_name, support_hours, gst_number)
+      VALUES ('global', 'Charvi Rental', 'Self-Drive Fleet · India', '', 'operationalhtklabs@gmail.com', '+91 98765 43210', 'Wakad, Pune, Maharashtra, India', 'charvirental.com', '24/7 Roadside & Concierge Support', '27AAACD1234F1Z5');
+    `);
+
+    // Ensure brand name is updated if it was previously default DriveMyCarz
+    try {
+      await testConn.query(`UPDATE platform_settings SET brand_name = 'Charvi Rental' WHERE (brand_name = 'DriveMyCarz' OR brand_name IS NULL OR brand_name = '') AND id = 'global'`);
+    } catch {}
+
     // Migration: ensure new site config columns exist
     const newSettingsCols = [
       { name: 'logo_url', type: 'TEXT' },
-      { name: 'logo_dark_url', type: 'TEXT' },
       { name: 'favicon_url', type: 'TEXT' },
-      { name: 'favicon_png_96_url', type: 'TEXT' },
-      { name: 'favicon_svg_url', type: 'TEXT' },
-      { name: 'favicon_ico_url', type: 'TEXT' },
-      { name: 'apple_touch_icon_url', type: 'TEXT' },
-      { name: 'webmanifest_url', type: 'TEXT' },
       { name: 'commission_rate', type: 'DECIMAL(5,2) DEFAULT 10.00' },
       { name: 'gst_rate', type: 'DECIMAL(5,2) DEFAULT 18.00' },
       { name: 'security_deposit_default', type: 'DECIMAL(10,2) DEFAULT 3000.00' },
@@ -329,25 +335,14 @@ export async function initDatabase() {
       { name: 'default_extra_km_rate', type: 'DECIMAL(6,2) DEFAULT 12.00' },
       { name: 'auto_approve_vehicles', type: 'BOOLEAN DEFAULT FALSE' },
       { name: 'auto_approve_hosts', type: 'BOOLEAN DEFAULT FALSE' },
-      { name: 'available_cities', type: 'JSON' },
     ];
     for (const col of newSettingsCols) {
       try {
-        await testConn.query(`ALTER TABLE platform_settings ADD COLUMN \`${col.name}\` ${col.type}`);
+        await testConn.query(`ALTER TABLE platform_settings ADD COLUMN ${col.name} ${col.type}`);
       } catch {
         // column already exists, safe to ignore
       }
     }
-
-    await testConn.query(`
-      INSERT IGNORE INTO platform_settings (id, brand_name, brand_tagline, logo_url, contact_email, contact_phone, contact_address, domain_name, support_hours, gst_number, available_cities)
-      VALUES ('global', 'Charvi Rental', 'Self-Drive Fleet · India', '', 'operationalhtklabs@gmail.com', '+91 98765 43210', 'Wakad, Pune, Maharashtra, India', 'charvirental.com', '24/7 Roadside & Concierge Support', '27AAACD1234F1Z5', '["Pune", "Mumbai", "Bangalore", "Delhi NCR", "Goa", "Hyderabad"]');
-    `);
-
-    // Ensure brand name is updated if it was previously default DriveMyCarz
-    try {
-      await testConn.query(`UPDATE platform_settings SET brand_name = 'Charvi Rental' WHERE (brand_name = 'DriveMyCarz' OR brand_name IS NULL OR brand_name = '') AND id = 'global'`);
-    } catch {}
 
     testConn.release();
     isConnected = true;
@@ -371,8 +366,7 @@ function getErrorSolutions(err: any): string[] {
     solutions.push('Check if a firewall is blocking port 3306 on the database server.');
   } else if (code === 'ER_ACCESS_DENIED_ERROR') {
     solutions.push('Double-check the DB_USER and DB_PASSWORD strings in server/db.ts.');
-    solutions.push('Ensure the MySQL user has permissions to connect from the AI Studio host IP.');
-    solutions.push('Try running: GRANT ALL PRIVILEGES ON charvirentals.* TO \'charvirentals\'@\'%\';');
+    solutions.push('Ensure the user has permissions to access the specified database from this app host.');
   } else if (code === 'ENOTFOUND' || code === 'EAI_AGAIN') {
     solutions.push('The database host address is unreachable. Check for typos or DNS issues.');
   } else if (code === 'ETIMEDOUT') {
@@ -381,7 +375,7 @@ function getErrorSolutions(err: any): string[] {
     solutions.push(`The database "${DB_NAME}" does not exist and the user might not have CREATE permissions.`);
   }
 
-  solutions.push('Note: Remote MySQL servers often require the connecting IP to be whitelisted.');
+  solutions.push('Ensure the database server allows remote connections if not running on localhost.');
   return solutions;
 }
 
@@ -394,7 +388,7 @@ export function getDbStatus() {
     database: DB_NAME,
     message: isConnected
       ? `System Active (${DB_HOST}:${DB_PORT}/${DB_NAME})`
-      : connectionErrorMessage || `Operational local store active.`,
+      : `Operational local store active.`,
     error: lastError ? {
       code: lastError.code,
       message: lastError.message,
@@ -1509,7 +1503,6 @@ export async function getPlatformSettings(): Promise<PlatformSettings> {
           default_extra_km_rate: rows[0].default_extra_km_rate != null ? Number(rows[0].default_extra_km_rate) : 12,
           auto_approve_vehicles: Boolean(rows[0].auto_approve_vehicles),
           auto_approve_hosts: Boolean(rows[0].auto_approve_hosts),
-          available_cities: typeof rows[0].available_cities === 'string' ? JSON.parse(rows[0].available_cities) : rows[0].available_cities || ['Pune', 'Mumbai', 'Bangalore', 'Delhi NCR', 'Goa', 'Hyderabad'],
         };
         return memSettings;
       }
@@ -1552,19 +1545,13 @@ export async function updatePlatformSettings(updates: Partial<PlatformSettings>)
         'default_extra_km_rate',
         'auto_approve_vehicles',
         'auto_approve_hosts',
-        'available_cities',
       ];
       const setClauses: string[] = [];
       const values: any[] = [];
       for (const field of fields) {
         if ((updates as any)[field] !== undefined) {
           setClauses.push(`\`${field}\` = ?`);
-          const val = (updates as any)[field];
-          if (field === 'available_cities' && Array.isArray(val)) {
-            values.push(JSON.stringify(val));
-          } else {
-            values.push(val);
-          }
+          values.push((updates as any)[field]);
         }
       }
       if (setClauses.length > 0) {

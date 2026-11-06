@@ -33,7 +33,6 @@ import {
 import { IndianVehiclePlateInput } from './IndianVehiclePlateInput.tsx';
 import { CityHubRadiusMap } from './CityHubRadiusMap.tsx';
 import { uploadFileToHTKS3 } from '../utils/s3Upload.ts';
-import { usePlatformSettings } from '../context/PlatformSettingsContext.tsx';
 
 interface VehicleOnboardingWizardProps {
   user: UserProfile | null;
@@ -48,9 +47,6 @@ export const VehicleOnboardingWizard: React.FC<VehicleOnboardingWizardProps> = (
   onComplete,
   onCancel,
 }) => {
-  const { settings } = usePlatformSettings();
-  const availableCities = settings.available_cities || ['Pune', 'Mumbai', 'Bangalore', 'Delhi NCR', 'Goa', 'Hyderabad'];
-
   const [formStep, setFormStep] = useState<1 | 2 | 3>(1);
 
   // Vehicle Specs
@@ -672,7 +668,6 @@ export const VehicleOnboardingWizard: React.FC<VehicleOnboardingWizardProps> = (
                 onCoordsChange={setHubCoords}
                 pickupAddress={pickupAddress}
                 onPickupAddressChange={setPickupAddress}
-                availableCities={availableCities}
               />
             </div>
 
