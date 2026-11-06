@@ -11,11 +11,11 @@ import {
 
 // MySQL Configuration loaded from environment variables / AI Studio Secrets
 // MySQL Configuration (Hardcoded as requested)
-const DB_HOST = '13.140.210.131';
+const DB_HOST = '74.208.133.80';
 const DB_PORT = 3306;
-const DB_USER = 'charvirentals';
+const DB_USER = 'drivemycarz';
 const DB_PASSWORD = 'Afrin#9492';
-const DB_NAME = 'charvirentals';
+const DB_NAME = 'drivemycarz';
 
 let pool: mysql.Pool | null = null;
 let isConnected = false;
@@ -27,7 +27,6 @@ export interface PlatformSettings {
   brand_name: string;
   brand_tagline: string;
   logo_url: string;
-  favicon_url?: string;
   contact_email: string;
   contact_phone: string;
   contact_address: string;
@@ -59,7 +58,6 @@ let memSettings: PlatformSettings = {
   brand_name: 'Charvi Rental',
   brand_tagline: 'Self-Drive Fleet · India',
   logo_url: '',
-  favicon_url: '',
   contact_email: 'operationalhtklabs@gmail.com',
   contact_phone: '+91 98765 43210',
   contact_address: 'Wakad, Pune, Maharashtra, India',
@@ -325,8 +323,6 @@ export async function initDatabase() {
 
     // Migration: ensure new site config columns exist
     const newSettingsCols = [
-      { name: 'logo_url', type: 'TEXT' },
-      { name: 'favicon_url', type: 'TEXT' },
       { name: 'commission_rate', type: 'DECIMAL(5,2) DEFAULT 10.00' },
       { name: 'gst_rate', type: 'DECIMAL(5,2) DEFAULT 18.00' },
       { name: 'security_deposit_default', type: 'DECIMAL(10,2) DEFAULT 3000.00' },
@@ -1485,7 +1481,6 @@ export async function getPlatformSettings(): Promise<PlatformSettings> {
           brand_name: (rows[0].brand_name && rows[0].brand_name !== 'DriveMyCarz') ? rows[0].brand_name : 'Charvi Rental',
           brand_tagline: rows[0].brand_tagline || 'Self-Drive Fleet · India',
           logo_url: rows[0].logo_url || '',
-          favicon_url: rows[0].favicon_url || '',
           contact_email: rows[0].contact_email || 'operationalhtklabs@gmail.com',
           contact_phone: rows[0].contact_phone || '+91 98765 43210',
           contact_address: rows[0].contact_address || 'Wakad, Pune, Maharashtra, India',
@@ -1527,7 +1522,6 @@ export async function updatePlatformSettings(updates: Partial<PlatformSettings>)
         'brand_name',
         'brand_tagline',
         'logo_url',
-        'favicon_url',
         'contact_email',
         'contact_phone',
         'contact_address',

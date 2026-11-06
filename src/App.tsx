@@ -553,8 +553,6 @@ function AppContent() {
   const isHostProfileRoute = path.startsWith('/host/') || path.startsWith('/lender-profile/');
   const currentHostId = isHostProfileRoute ? path.split('/')[2] : null;
 
-  const isDashboard = path === '/customer' || path === '/lender' || path === '/list-car' || path === '/admin';
-
   // ROUTING CONTENT DETERMINATION
   let mainContent: React.ReactNode = null;
 
@@ -993,7 +991,7 @@ function AppContent() {
       />
 
       {/* Global Detailed Compact Footer */}
-      {!isDashboard && <Footer />}
+      <Footer />
 
       {/* MODALS */}
       {/* 1. Direct Booking Modal */}

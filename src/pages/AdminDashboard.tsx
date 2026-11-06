@@ -73,7 +73,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const [settingsForm, setSettingsForm] = useState<PlatformSettings>(settings);
   const [savingSettings, setSavingSettings] = useState(false);
   const [isUploadingLogo, setIsUploadingLogo] = useState(false);
-  const [isUploadingFavicon, setIsUploadingFavicon] = useState(false);
 
   useEffect(() => {
     if (settings) {
@@ -325,37 +324,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       showNotification('Network error uploading logo.');
     } finally {
       setIsUploadingLogo(false);
-      if (e.target) e.target.value = '';
-    }
-  };
-
-  const handleFaviconUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setIsUploadingFavicon(true);
-    try {
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('caption', 'Platform Favicon');
-      formData.append('file_name', file.name);
-
-      const res = await fetch('/api/upload', {
-        method: 'POST',
-        body: formData,
-      });
-      const data = await res.json();
-      if (res.ok && (data.file_url || data.direct_link)) {
-        const faviconUrl = data.direct_link || data.file_url;
-        setSettingsForm(prev => ({ ...prev, favicon_url: faviconUrl }));
-        showNotification('Browser Favicon uploaded! Click Save to apply.');
-      } else {
-        showNotification(data.error || 'Failed to upload favicon.');
-      }
-    } catch (err) {
-      console.error('Favicon upload error:', err);
-      showNotification('Network error uploading favicon.');
-    } finally {
-      setIsUploadingFavicon(false);
       if (e.target) e.target.value = '';
     }
   };
@@ -1778,70 +1746,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                 </button>
                               )}
                             </div>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Favicon Configuration */}
-                      <div className="space-y-3 pt-2">
-                        <label className="block text-[11px] font-bold text-neutral-700 dark:text-neutral-300 uppercase tracking-wider flex items-center justify-between">
-                          <span>Browser Favicon (.ico, .png, .svg)</span>
-                          <span className="text-[10px] font-extrabold text-orange-600 bg-orange-50 dark:bg-orange-950/60 px-2 py-0.5 rounded-md border border-orange-200 dark:border-orange-800">
-                            Tab &amp; Bookmark Icon
-                          </span>
-                        </label>
-
-                        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 p-4 rounded-2xl bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800">
-                          <div className="w-16 h-16 rounded-xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 flex items-center justify-center p-2 shrink-0 overflow-hidden shadow-2xs">
-                            {settingsForm.favicon_url ? (
-                              <img
-                                src={settingsForm.favicon_url}
-                                alt="Favicon Preview"
-                                className="w-8 h-8 object-contain"
-                              />
-                            ) : (
-                              <div className="flex flex-col items-center text-neutral-400">
-                                <Globe className="w-6 h-6 text-orange-600 mb-0.5" />
-                                <span className="text-[9px] font-bold">Default</span>
-                              </div>
-                            )}
-                          </div>
-
-                          <div className="flex-1 space-y-2 w-full">
-                            <input
-                              type="url"
-                              value={settingsForm.favicon_url || ''}
-                              onChange={e => setSettingsForm({ ...settingsForm, favicon_url: e.target.value })}
-                              placeholder="Direct Favicon URL (https://.../favicon.ico or .png)"
-                              className="w-full px-3 py-2 rounded-xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 text-xs font-mono focus:border-orange-500 focus:outline-none"
-                            />
-
-                            <div className="flex flex-wrap items-center gap-2">
-                              <label className="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-orange-600 hover:bg-orange-700 text-white text-xs font-bold cursor-pointer transition-colors shadow-2xs">
-                                <Upload className="w-3.5 h-3.5 text-white" />
-                                <span>{isUploadingFavicon ? 'Uploading Favicon...' : 'Upload Favicon Image'}</span>
-                                <input
-                                  type="file"
-                                  accept="image/*,.ico,.svg"
-                                  onChange={handleFaviconUpload}
-                                  disabled={isUploadingFavicon}
-                                  className="hidden"
-                                />
-                              </label>
-
-                              {settingsForm.favicon_url && (
-                                <button
-                                  type="button"
-                                  onClick={() => setSettingsForm({ ...settingsForm, favicon_url: '' })}
-                                  className="px-3 py-1.5 rounded-xl border border-neutral-200 dark:border-neutral-700 hover:bg-neutral-100 dark:hover:bg-neutral-800 text-xs font-bold text-neutral-600 dark:text-neutral-300 cursor-pointer"
-                                >
-                                  Remove Favicon
-                                </button>
-                              )}
-                            </div>
-                            <span className="text-[10px] text-neutral-400 block">
-                              Appears in browser tabs, mobile bookmarks, and search results (Recommended size: 32x32px or 64x64px PNG/ICO).
-                            </span>
                           </div>
                         </div>
                       </div>

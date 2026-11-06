@@ -16,6 +16,13 @@ import firebaseConfigStatic from '../firebase-applet-config.json';
 
 // Firebase configuration for Charvi Rentals
 const firebaseConfig = {
+  apiKey: "AIzaSyBxEoagwYU_cUq1w4E7ANMW8BsekLoYdbU",
+  authDomain: "charvi-rentals.firebaseapp.com",
+  projectId: "charvi-rentals",
+  storageBucket: "charvi-rentals.firebasestorage.app",
+  messagingSenderId: "131646792517",
+  appId: "1:131646792517:web:95c03d16b32d3c33f8942c",
+  measurementId: "G-Z05CRWVL78",
   ...firebaseConfigStatic
 };
 

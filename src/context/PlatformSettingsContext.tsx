@@ -5,7 +5,6 @@ export interface PlatformSettings {
   brand_name: string;
   brand_tagline: string;
   logo_url: string;
-  favicon_url?: string;
   contact_email: string;
   contact_phone: string;
   contact_address: string;
@@ -31,7 +30,6 @@ export const DEFAULT_PLATFORM_SETTINGS: PlatformSettings = {
   brand_name: 'Charvi Rental',
   brand_tagline: 'Self-Drive Fleet · India',
   logo_url: '',
-  favicon_url: '',
   contact_email: 'operationalhtklabs@gmail.com',
   contact_phone: '+91 98765 43210',
   contact_address: 'Wakad, Pune, Maharashtra, India',
@@ -86,19 +84,6 @@ export const PlatformSettingsProvider: React.FC<{ children: React.ReactNode }> =
   useEffect(() => {
     fetchSettings();
   }, [fetchSettings]);
-
-  // Dynamically update browser favicon in document head
-  useEffect(() => {
-    if (settings.favicon_url) {
-      let iconLink = document.querySelector('link[rel="icon"]') as HTMLLinkElement | null;
-      if (!iconLink) {
-        iconLink = document.createElement('link');
-        iconLink.rel = 'icon';
-        document.head.appendChild(iconLink);
-      }
-      iconLink.href = settings.favicon_url;
-    }
-  }, [settings.favicon_url]);
 
   const updateSettings = async (updates: Partial<PlatformSettings>): Promise<boolean> => {
     try {
