@@ -21,6 +21,7 @@ interface CityHubRadiusMapProps {
   onHubAreaChange: (area: string) => void;
   coords: { lat: number; lng: number };
   onCoordsChange: (coords: { lat: number; lng: number }) => void;
+  availableCities: string[];
 }
 
 // Preset hubs for Pune and nearby regions
@@ -93,6 +94,7 @@ export const CityHubRadiusMap: React.FC<CityHubRadiusMapProps> = ({
   onHubAreaChange,
   coords,
   onCoordsChange,
+  availableCities,
 }) => {
   const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '';
 
@@ -123,21 +125,22 @@ export const CityHubRadiusMap: React.FC<CityHubRadiusMapProps> = ({
       {/* City Hub Selection & Primary Operational Unit with Google Maps Autocomplete */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
-          <GooglePlaceAutocompleteInput
-            label="Operating City"
-            required
-            value={city}
-            onChange={(val) => onCityChange(val)}
-            onPlaceSelect={(place) => {
-              onCityChange(place.city || place.displayName || place.formattedAddress);
-              if (place.lat && place.lng) {
-                onCoordsChange({ lat: place.lat, lng: place.lng });
-              }
-            }}
-            placeholder="Search or enter operating city (e.g. Pune, Mumbai, Bengaluru...)"
-            icon={<MapPin className="w-4 h-4 text-orange-600" />}
-            helperText="Supports any custom operating city with live Google Maps autocomplete."
-          />
+          <label className="block text-[11px] font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider mb-1.5">
+            Operating City
+          </label>
+          <div className="relative">
+            <Building2 className="w-4 h-4 text-orange-600 absolute left-3.5 top-3.5" />
+            <select
+              value={city}
+              onChange={(e) => onCityChange(e.target.value)}
+              className="w-full bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl pl-10 pr-4 py-3 text-xs font-bold text-neutral-900 dark:text-white focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none appearance-none"
+            >
+              {availableCities.map(c => (
+                <option key={c} value={c}>{c}</option>
+              ))}
+            </select>
+          </div>
+          <p className="text-[10px] text-neutral-500 mt-1">Select from platform-approved operational cities.</p>
         </div>
 
         <div>

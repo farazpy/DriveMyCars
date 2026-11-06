@@ -70,12 +70,23 @@ export const Footer: React.FC = () => {
           {/* Col 1: Brand Info */}
           <div className="col-span-2 space-y-3">
             <Link to="/" className="flex items-center space-x-2 group">
-              {settings.logo_url ? (
-                <img
-                  src={settings.logo_url}
-                  alt={settings.brand_name}
-                  className="h-8 max-w-[140px] object-contain rounded-lg"
-                />
+              {settings.logo_url || settings.logo_dark_url ? (
+                <>
+                  {settings.logo_url && (
+                    <img
+                      src={settings.logo_url}
+                      alt={settings.brand_name}
+                      className={`h-8 max-w-[140px] object-contain rounded-lg ${settings.logo_dark_url ? 'dark:hidden' : ''}`}
+                    />
+                  )}
+                  {settings.logo_dark_url && (
+                    <img
+                      src={settings.logo_dark_url}
+                      alt={settings.brand_name}
+                      className={`h-8 max-w-[140px] object-contain rounded-lg ${settings.logo_url ? 'hidden dark:block' : ''}`}
+                    />
+                  )}
+                </>
               ) : (
                 <div className="w-7 h-7 rounded-xl bg-orange-600 flex items-center justify-center text-white shadow-2xs">
                   <Car className="w-4 h-4" />

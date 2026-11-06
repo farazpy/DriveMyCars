@@ -31,9 +31,10 @@ import {
   Mail,
   Upload,
   Image as ImageIcon,
-  Save
+  Save,
+  Database
 } from 'lucide-react';
-import { Car, Booking, UserProfile } from '../types.ts';
+import { Car, Booking, UserProfile, DbStatusInfo } from '../types.ts';
 import { Link, useRouter } from '../router.tsx';
 import { EditCarModal } from '../components/EditCarModal.tsx';
 import { InvoiceModal } from '../components/InvoiceModal.tsx';
@@ -45,6 +46,8 @@ interface AdminDashboardProps {
   onSignOut: () => void;
   onSignInRequired?: () => void;
   onOpenListCarModal?: () => void;
+  dbStatus?: DbStatusInfo | null;
+  onOpenDatabaseModal?: () => void;
 }
 
 const AUTHORIZED_ADMIN_EMAILS = [
@@ -58,6 +61,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   onSignOut,
   onSignInRequired,
   onOpenListCarModal,
+  dbStatus,
+  onOpenDatabaseModal,
 }) => {
   const { navigate } = useRouter();
   const { settings, updateSettings } = usePlatformSettings();
@@ -73,6 +78,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const [settingsForm, setSettingsForm] = useState<PlatformSettings>(settings);
   const [savingSettings, setSavingSettings] = useState(false);
   const [isUploadingLogo, setIsUploadingLogo] = useState(false);
+  const [isUploadingFavicon, setIsUploadingFavicon] = useState(false);
+  const [newCityInput, setNewCityInput] = useState('');
 
   useEffect(() => {
     if (settings) {
@@ -328,6 +335,37 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     }
   };
 
+  const handleFaviconUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setIsUploadingFavicon(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('caption', 'Platform Favicon');
+      formData.append('file_name', file.name);
+
+      const res = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+      });
+      const data = await res.json();
+      if (res.ok && (data.file_url || data.direct_link)) {
+        const faviconUrl = data.direct_link || data.file_url;
+        setSettingsForm(prev => ({ ...prev, favicon_url: faviconUrl }));
+        showNotification('Browser Favicon uploaded! Click Save to apply.');
+      } else {
+        showNotification(data.error || 'Failed to upload favicon.');
+      }
+    } catch (err) {
+      console.error('Favicon upload error:', err);
+      showNotification('Network error uploading favicon.');
+    } finally {
+      setIsUploadingFavicon(false);
+      if (e.target) e.target.value = '';
+    }
+  };
+
   // Computed KPIs
   const pendingCarsCount = cars.filter(c => c.approval_status === 'pending').length;
   const openDisputesCount = bookings.filter(b => b.dispute_status === 'open').length;
@@ -491,6 +529,19 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           <span className="text-[10px] font-extrabold px-1 sm:px-1.5 py-0.5 rounded-md bg-orange-950/60 text-orange-400 border border-orange-800 shrink-0">
             v1.3.7
           </span>
+          {dbStatus && (
+            <button
+              onClick={onOpenDatabaseModal}
+              className={`p-1 rounded border transition-all ${
+                dbStatus.connected
+                  ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                  : 'bg-red-500/10 text-red-400 border-red-500/20 animate-pulse'
+              }`}
+              title={dbStatus.connected ? 'Database Connected' : 'Database Connection Failed'}
+            >
+              <Database className="w-3.5 h-3.5" />
+            </button>
+          )}
           <span className="text-neutral-600 hidden sm:inline">|</span>
           <div className="hidden lg:flex items-center space-x-2">
             <span className="text-xs font-bold text-neutral-200">System Governance Portal</span>
@@ -1749,6 +1800,70 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                           </div>
                         </div>
                       </div>
+
+                      {/* Favicon Configuration */}
+                      <div className="space-y-3 pt-2">
+                        <label className="block text-[11px] font-bold text-neutral-700 dark:text-neutral-300 uppercase tracking-wider flex items-center justify-between">
+                          <span>Browser Favicon (.ico, .png, .svg)</span>
+                          <span className="text-[10px] font-extrabold text-orange-600 bg-orange-50 dark:bg-orange-950/60 px-2 py-0.5 rounded-md border border-orange-200 dark:border-orange-800">
+                            Tab &amp; Bookmark Icon
+                          </span>
+                        </label>
+
+                        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 p-4 rounded-2xl bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800">
+                          <div className="w-16 h-16 rounded-xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 flex items-center justify-center p-2 shrink-0 overflow-hidden shadow-2xs">
+                            {settingsForm.favicon_url ? (
+                              <img
+                                src={settingsForm.favicon_url}
+                                alt="Favicon Preview"
+                                className="w-8 h-8 object-contain"
+                              />
+                            ) : (
+                              <div className="flex flex-col items-center text-neutral-400">
+                                <Globe className="w-6 h-6 text-orange-600 mb-0.5" />
+                                <span className="text-[9px] font-bold">Default</span>
+                              </div>
+                            )}
+                          </div>
+
+                          <div className="flex-1 space-y-2 w-full">
+                            <input
+                              type="url"
+                              value={settingsForm.favicon_url || ''}
+                              onChange={e => setSettingsForm({ ...settingsForm, favicon_url: e.target.value })}
+                              placeholder="Direct Favicon URL (https://.../favicon.ico or .png)"
+                              className="w-full px-3 py-2 rounded-xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 text-xs font-mono focus:border-orange-500 focus:outline-none"
+                            />
+
+                            <div className="flex flex-wrap items-center gap-2">
+                              <label className="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-orange-600 hover:bg-orange-700 text-white text-xs font-bold cursor-pointer transition-colors shadow-2xs">
+                                <Upload className="w-3.5 h-3.5 text-white" />
+                                <span>{isUploadingFavicon ? 'Uploading Favicon...' : 'Upload Favicon Image'}</span>
+                                <input
+                                  type="file"
+                                  accept="image/*,.ico,.svg"
+                                  onChange={handleFaviconUpload}
+                                  disabled={isUploadingFavicon}
+                                  className="hidden"
+                                />
+                              </label>
+
+                              {settingsForm.favicon_url && (
+                                <button
+                                  type="button"
+                                  onClick={() => setSettingsForm({ ...settingsForm, favicon_url: '' })}
+                                  className="px-3 py-1.5 rounded-xl border border-neutral-200 dark:border-neutral-700 hover:bg-neutral-100 dark:hover:bg-neutral-800 text-xs font-bold text-neutral-600 dark:text-neutral-300 cursor-pointer"
+                                >
+                                  Remove Favicon
+                                </button>
+                              )}
+                            </div>
+                            <span className="text-[10px] text-neutral-400 block">
+                              Appears in browser tabs, mobile bookmarks, and search results (Recommended size: 32x32px or 64x64px PNG/ICO).
+                            </span>
+                          </div>
+                        </div>
+                      </div>
                     </div>
 
                     {/* Social Media Links */}
@@ -2132,8 +2247,75 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         type="checkbox"
                         checked={Boolean(settingsForm.auto_approve_hosts)}
                         onChange={e => setSettingsForm({ ...settingsForm, auto_approve_hosts: e.target.checked })}
-                        className="w-5 h-5 accent-orange-600 rounded cursor-pointer mt-0.5"
                       />
+                    </div>
+                  </div>
+
+                  {/* Operational Cities Management */}
+                  <div className="p-4 sm:p-6 rounded-2xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div className="space-y-1">
+                        <h3 className="font-black text-sm text-neutral-900 dark:text-white flex items-center gap-2">
+                          <Globe className="w-4 h-4 text-orange-600" />
+                          Operational Cities Management
+                        </h3>
+                        <p className="text-[11px] text-neutral-500 dark:text-neutral-400">
+                          Define which cities are available for car listings and searches across the platform.
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-wrap gap-2 pt-2">
+                      {(settingsForm.available_cities || []).map((city, idx) => (
+                        <div
+                          key={`${city}-${idx}`}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-orange-50 dark:bg-orange-950/40 text-orange-700 dark:text-orange-300 border border-orange-200 dark:border-orange-800 text-[11px] font-bold"
+                        >
+                          <span>{city}</span>
+                          <button
+                            onClick={() => {
+                              const updated = (settingsForm.available_cities || []).filter(c => c !== city);
+                              setSettingsForm({ ...settingsForm, available_cities: updated });
+                            }}
+                            className="hover:text-red-600 transition-colors"
+                          >
+                            <XCircle className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="flex gap-2 max-w-md">
+                      <input
+                        type="text"
+                        placeholder="Add city (e.g. Pune, Mumbai...)"
+                        value={newCityInput}
+                        onChange={(e) => setNewCityInput(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            if (newCityInput.trim()) {
+                              const updated = [...(settingsForm.available_cities || []), newCityInput.trim()];
+                              setSettingsForm({ ...settingsForm, available_cities: updated });
+                              setNewCityInput('');
+                            }
+                          }
+                        }}
+                        className="flex-1 px-4 py-2 rounded-xl text-xs bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 focus:border-orange-500 outline-none transition-all"
+                      />
+                      <button
+                        onClick={() => {
+                          if (newCityInput.trim()) {
+                            const updated = [...(settingsForm.available_cities || []), newCityInput.trim()];
+                            setSettingsForm({ ...settingsForm, available_cities: updated });
+                            setNewCityInput('');
+                          }
+                        }}
+                        className="px-4 py-2 rounded-xl text-xs font-bold bg-orange-600 text-white hover:bg-orange-700 transition-colors flex items-center gap-2"
+                      >
+                        <PlusCircle className="w-4 h-4" />
+                        <span>Add City</span>
+                      </button>
                     </div>
                   </div>
 

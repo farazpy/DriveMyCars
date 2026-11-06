@@ -14,7 +14,7 @@ import {
   Check,
 } from 'lucide-react';
 import { FilterState } from '../types.ts';
-
+import { usePlatformSettings } from '../context/PlatformSettingsContext.tsx';
 import { PuneAreaSelect2 } from './PuneAreaSelect2.tsx';
 
 interface HeroSearchBarProps {
@@ -43,6 +43,9 @@ export const HeroSearchBar: React.FC<HeroSearchBarProps> = ({
   totalResultsCount,
   onFind,
 }) => {
+  const { settings } = usePlatformSettings();
+  const availableCities = settings.available_cities || ['Pune', 'Mumbai', 'Bangalore', 'Delhi NCR', 'Goa', 'Hyderabad'];
+  
   const [gpsLocating, setGpsLocating] = useState(false);
   const [gpsMessage, setGpsMessage] = useState<string | null>(null);
 
@@ -149,17 +152,17 @@ export const HeroSearchBar: React.FC<HeroSearchBarProps> = ({
             {/* Category Badge */}
             <div className="inline-flex items-center space-x-2 px-3.5 py-1.5 rounded-full text-xs font-bold bg-orange-50 dark:bg-orange-950/40 text-orange-700 dark:text-orange-300 border border-orange-200 dark:border-orange-800/60 shadow-2xs">
               <Sparkles className="w-3.5 h-3.5 text-orange-600 dark:text-orange-400" />
-              <span>Pune's Premium Self-Drive Fleet · Zero Security Deposit</span>
+              <span>Premium Self-Drive Fleet · Zero Security Deposit · Available in {availableCities.length} Cities</span>
             </div>
 
             {/* Main Headline */}
             <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black text-neutral-950 dark:text-white tracking-tight leading-[1.12]">
-              Rent extraordinary cars in Pune, <span className="text-orange-600">on your terms</span>
+              Rent extraordinary cars <span className="text-orange-600">on your terms</span>
             </h1>
 
             {/* Subtitle */}
             <p className="text-sm sm:text-base text-neutral-600 dark:text-neutral-400 font-normal max-w-xl leading-relaxed">
-              Skip traditional rental counters. Book verified self-drive cars directly from vetted local hosts with doorstep delivery anywhere in Pune.
+              Skip traditional rental counters. Book verified self-drive cars directly from vetted local hosts with doorstep delivery across {availableCities.join(', ')}.
             </p>
 
             {/* Highlights List */}
@@ -180,14 +183,13 @@ export const HeroSearchBar: React.FC<HeroSearchBarProps> = ({
                 <div className="w-5 h-5 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
                   <Check className="w-3 h-3 stroke-[3]" />
                 </div>
-                <span><strong>Doorstep delivery & pick-up</strong> across Wakad, Baner, KP & Hinjawadi</span>
+                <span><strong>Doorstep delivery & pick-up</strong> across all operational cities</span>
               </div>
             </div>
 
-            {/* Live Count Pill */}
             <div className="inline-flex items-center space-x-2 text-xs font-semibold text-neutral-600 dark:text-neutral-400 pt-2">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              <span>{totalResultsCount} verified vehicles currently ready for instant booking in Pune</span>
+              <span>{totalResultsCount} verified vehicles currently ready for instant booking in {availableCities.length} hubs</span>
             </div>
 
           </div>
@@ -207,11 +209,36 @@ export const HeroSearchBar: React.FC<HeroSearchBarProps> = ({
 
               <div className="space-y-4">
                 
+                {/* 0. SELECT CITY */}
+                <div className="grid grid-cols-1 gap-4">
+                  <div>
+                    <label className="block text-[11px] font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider mb-1.5">
+                      Operational City
+                    </label>
+                    <div className="flex flex-wrap gap-2">
+                      {availableCities.map(city => (
+                        <button
+                          key={city}
+                          type="button"
+                          onClick={() => onFilterChange({ location: city })}
+                          className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition-all ${
+                            filters.location.toLowerCase().includes(city.toLowerCase())
+                              ? 'bg-orange-600 text-white border-orange-600 shadow-sm'
+                              : 'bg-neutral-50 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400 border-neutral-200 dark:border-neutral-700 hover:border-orange-500'
+                          }`}
+                        >
+                          {city}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
                 {/* 1. PICK-UP LOCATION (SELECT2 COMPONENT) */}
                 <div>
                   <div className="flex items-center justify-between mb-1.5">
                     <label className="block text-[11px] font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">
-                      Pick-up Area / Location (Select2)
+                      Specific Area / Hub (e.g. Wakad, Airport)
                     </label>
                   </div>
 
@@ -221,6 +248,7 @@ export const HeroSearchBar: React.FC<HeroSearchBarProps> = ({
                     onDetectGps={handleDetectLocation}
                     gpsLocating={gpsLocating}
                     gpsMessage={gpsMessage}
+                    cityName={availableCities.find(c => filters.location.includes(c)) || 'Pune'}
                   />
 
                   {gpsMessage && (

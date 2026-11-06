@@ -299,6 +299,66 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             </svg>
             <span>Continue with Google</span>
           </button>
+
+          {/* Quick Instant Demo Logins */}
+          <div className="pt-2 border-t border-neutral-100 dark:border-neutral-800 space-y-2">
+            <span className="text-[10px] font-bold text-neutral-400 dark:text-neutral-500 uppercase tracking-wider block text-center">
+              ⚡ 1-Click Instant Demo Login
+            </span>
+            <div className="grid grid-cols-3 gap-1.5 text-[11px] font-bold">
+              <button
+                type="button"
+                onClick={async () => {
+                  setLoading(true);
+                  await onSuccess({
+                    uid: 'admin-faraz-id',
+                    email: 'farazxs16@gmail.com',
+                    displayName: 'Faraz (Super Admin)',
+                    photoURL: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=120&q=80',
+                  });
+                  setLoading(false);
+                  onClose();
+                }}
+                className="p-2 rounded-xl bg-orange-50 dark:bg-orange-950/40 text-orange-800 dark:text-orange-300 border border-orange-200 dark:border-orange-800 hover:bg-orange-100 transition-colors text-center cursor-pointer"
+              >
+                <span>Super Admin</span>
+              </button>
+              <button
+                type="button"
+                onClick={async () => {
+                  setLoading(true);
+                  await onSuccess({
+                    uid: 'host-lender-id',
+                    email: 'host@charvirental.com',
+                    displayName: 'Rajesh (Verified Host)',
+                    photoURL: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=120&q=80',
+                  });
+                  setLoading(false);
+                  onClose();
+                }}
+                className="p-2 rounded-xl bg-neutral-100 dark:bg-neutral-800 text-neutral-800 dark:text-neutral-200 border border-neutral-200 dark:border-neutral-700 hover:bg-neutral-200 transition-colors text-center cursor-pointer"
+              >
+                <span>Host (Lender)</span>
+              </button>
+              <button
+                type="button"
+                onClick={async () => {
+                  setLoading(true);
+                  await onSuccess({
+                    uid: 'customer-renter-id',
+                    email: 'customer@charvirental.com',
+                    displayName: 'Amit (Renter)',
+                    photoURL: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=120&q=80',
+                  });
+                  setLoading(false);
+                  onClose();
+                }}
+                className="p-2 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 hover:bg-emerald-100 transition-colors text-center cursor-pointer"
+              >
+                <span>Customer</span>
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </div>

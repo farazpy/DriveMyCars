@@ -102,11 +102,19 @@ export const IndianVehiclePlateInput: React.FC<IndianVehiclePlateInputProps> = (
   return (
     <div className="space-y-2.5">
       <div className="flex items-center justify-between">
-        <label className="block text-xs font-bold text-neutral-700 dark:text-neutral-300">
-          Indian Vehicle Registration Number {required && <span className="text-orange-600">*</span>}
-        </label>
-        <span className="text-[10px] text-neutral-400 font-medium">
-          Format: State · District/RTO · Series · 4-Digit Number
+        <div className="space-y-0.5">
+          <label className="block text-xs font-bold text-neutral-900 dark:text-white">
+            Indian Vehicle Registration Number {required && <span className="text-orange-600">*</span>}
+          </label>
+          <div className="flex items-center gap-1.5 text-[10px] font-bold text-emerald-600 dark:text-emerald-400">
+            <span className="flex items-center gap-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+              Private: Not shown publicly to guests
+            </span>
+          </div>
+        </div>
+        <span className="text-[10px] text-neutral-400 font-medium hidden sm:block">
+          Format: State · District · Series · Number
         </span>
       </div>
 

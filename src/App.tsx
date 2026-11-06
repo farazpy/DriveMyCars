@@ -28,7 +28,8 @@ import { SecurityGuaranteeModal } from './components/SecurityGuaranteeModal.tsx'
 import { OnboardingWizardModal } from './components/OnboardingWizardModal.tsx';
 import { AuthModal } from './components/AuthModal.tsx';
 import { CompareCarsDrawer } from './components/CompareCarsDrawer.tsx';
-import { Car, Booking, UserProfile, UserRole, FilterState } from './types.ts';
+import { DatabaseModal } from './components/DatabaseModal.tsx';
+import { Car, Booking, UserProfile, UserRole, FilterState, DbStatusInfo } from './types.ts';
 import { initAuth, googleSignIn, logout, updateFirebaseConfig } from './firebase.ts';
 import { RouterProvider, useRouter, Link } from './router.tsx';
 import { ThemeProvider } from './context/ThemeContext.tsx';
@@ -74,6 +75,20 @@ function AppContent() {
   const [cars, setCars] = useState<Car[]>([]);
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
+  const [dbStatus, setDbStatus] = useState<DbStatusInfo | null>(null);
+  const [isDatabaseModalOpen, setIsDatabaseModalOpen] = useState(false);
+
+  const fetchDbStatus = useCallback(async () => {
+    try {
+      const res = await fetch('/api/health');
+      if (res.ok) {
+        const data = await res.json();
+        setDbStatus(data.db);
+      }
+    } catch (e) {
+      console.error('Failed to fetch DB status:', e);
+    }
+  }, []);
 
   // Selected City (Default: Pune)
   const [selectedCity, setSelectedCity] = useState<string>('Pune');
@@ -206,6 +221,10 @@ function AppContent() {
       setLoading(false);
     }
   }, [searchParams]);
+
+  useEffect(() => {
+    fetchDbStatus();
+  }, [fetchDbStatus]);
 
   // Fetch Bookings
   const fetchBookings = useCallback(async () => {
@@ -553,6 +572,8 @@ function AppContent() {
   const isHostProfileRoute = path.startsWith('/host/') || path.startsWith('/lender-profile/');
   const currentHostId = isHostProfileRoute ? path.split('/')[2] : null;
 
+  const isDashboard = path === '/customer' || path === '/lender' || path === '/list-car' || path === '/admin';
+
   // ROUTING CONTENT DETERMINATION
   let mainContent: React.ReactNode = null;
 
@@ -595,6 +616,8 @@ function AppContent() {
         onSignOut={handleSignOut}
         onSignInRequired={handleSignIn}
         onOpenListCarModal={() => setIsListCarModalOpen(true)}
+        dbStatus={dbStatus}
+        onOpenDatabaseModal={() => setIsDatabaseModalOpen(true)}
       />
     );
   } else {
@@ -977,6 +1000,8 @@ function AppContent() {
           onOpenTripsModal={() => navigate('/customer')}
           onOpenLenderPortal={() => navigate('/lender')}
           onOpenListCarModal={() => setIsListCarModalOpen(true)}
+          dbStatus={dbStatus}
+          onOpenDatabaseModal={() => setIsDatabaseModalOpen(true)}
         />
       )}
 
@@ -991,7 +1016,7 @@ function AppContent() {
       />
 
       {/* Global Detailed Compact Footer */}
-      <Footer />
+      {!isDashboard && <Footer />}
 
       {/* MODALS */}
       {/* 1. Direct Booking Modal */}
@@ -1064,6 +1089,13 @@ function AppContent() {
         onClose={() => setIsAuthModalOpen(false)}
         onSuccess={handleAuthSuccess}
         onGoogleSignIn={handleGoogleSignInAction}
+      />
+
+      <DatabaseModal
+        isOpen={isDatabaseModalOpen}
+        onClose={() => setIsDatabaseModalOpen(false)}
+        status={dbStatus}
+        onRefresh={fetchDbStatus}
       />
     </div>
   );
